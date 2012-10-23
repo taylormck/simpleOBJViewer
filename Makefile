@@ -50,3 +50,7 @@ material.o: material.cpp material.h
 
 clean:
 	rm -f viewer *.o
+	
+TURNIN_FILES = bb.h common.h io.cpp io.h main.cpp Makefile material.cpp material.h mesh.cpp mesh.h README.txt texture.cpp texture.h vec.h
+turnin:
+	turnin --submit edwardsj project4 $(TURNIN_FILES)

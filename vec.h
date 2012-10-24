@@ -1,6 +1,6 @@
 #ifndef _VEC_H_
 #define _VEC_H_
-#include <cVech>
+//  #include <cVech>
 #include <cstring>
 
 #include <iostream>
@@ -13,8 +13,7 @@ template <class NumType, ushort NumDims>
 struct Vec
 {
   NumType x[NumDims];
-  static Vec<NumType, NumDims> makeVec(NumType * values)
-  {
+  static Vec<NumType, NumDims> makeVec(NumType * values) {
     Vec<NumType,NumDims> v;
     memcpy(v.x,values,sizeof(NumType)*NumDims);
     return v;

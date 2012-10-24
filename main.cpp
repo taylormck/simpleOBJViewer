@@ -9,17 +9,37 @@
 #include "./mesh.h"
 #include "./io.h"
 #include "./texture.h"
+#define PI 3.14159
 
 using namespace std;
+//---------------------------------------------------------------------------//
+// Function declarations
+Vec3f getArcBallVector(int, int);
 
 Mesh mesh;
-
 GLuint* texture_ids;
 
+//---------------------------------------------------------------------------//
+// Used for the camera functions
+// eye is a 3d Vector that represents the Vector Eye - Point of Rotation
+// Our ArcBall is centered around the origin only for now
+Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
+Vec3d eyeNormal = eye.unit();
+GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 2, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+//---------------------------------------------------------------------------//
+// Variables used for ArcBall Rotation
+int prev_x = 0, prev_y = 0, cur_x = 0, cur_y = 0;
+bool lDown = false;
+Vec3f start, end;
+float rotateAngle;
+//---------------------------------------------------------------------------//
+// Used for zoom
+bool mDown = false;
+
+//---------------------------------------------------------------------------//
 // window parameters
 int window_width = 800, window_height = 600;
 float window_aspect = window_width / static_cast<float>(window_height);
-
 bool scene_lighting;
 
 void Display() {
@@ -33,19 +53,19 @@ void Display() {
   // mesh.bb() may be useful.
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluLookAt(2, 2, 5,
-            0, 0, 0,
-            0, 1, 0);
+  gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
+  // You can leave the axis in if you like.
+
+  glMultMatrixf(storedMatrix);
+//  MultMatrix(storedMatrix);
+
+  DrawAxis();
 
   // TODO set up lighting, material properties and render mesh.
   // Be sure to call glEnable(GL_RESCALE_NORMAL) so your normals
   // remain normalized throughout transformations.
 
-  // You can leave the axis in if you like.
-  glDisable(GL_LIGHTING);
-  glLineWidth(4);
-  DrawAxis();
-  glEnable(GL_LIGHTING);
+
 
   glFlush();
   glutSwapBuffers();
@@ -56,10 +76,10 @@ void PrintMatrix(GLfloat* m) {
   int w = 6;
   for (int i = 0; i < 4; ++i) {
     cout << setprecision(2) << setw(w) << m[i] << " "
-         << setprecision(2) << setw(w) << m[i+4] << " "
-         << setprecision(2) << setw(w) << m[i+8] << " "
-         << setprecision(2) << setw(w) << m[i+12] << " "
-         << endl;
+        << setprecision(2) << setw(w) << m[i+4] << " "
+        << setprecision(2) << setw(w) << m[i+8] << " "
+        << setprecision(2) << setw(w) << m[i+12] << " "
+        << endl;
   }
   cout << endl;
 }
@@ -113,6 +133,8 @@ void Init() {
 }
 
 void DrawAxis() {
+  glDisable(GL_LIGHTING);
+  glLineWidth(4);
   const Vec3f c = {0, 0, 0};
   const float L = 1;
   const Vec3f X = {L, 0, 0}, Y = {0, L, 0}, Z = {0, 0, L};
@@ -128,16 +150,64 @@ void DrawAxis() {
   glVertex3fv(c.x);
   glVertex3fv((c+Z).x);
   glEnd();
+  glEnable(GL_LIGHTING);
 }
+
+
 
 void MouseButton(int button, int state, int x, int y) {
   // TODO implement arc ball and zoom
-  glutPostRedisplay();
+  if (button == GLUT_LEFT_BUTTON) {
+    if (state == GLUT_DOWN) {
+      lDown = true;
+      prev_x = x;
+      cur_x = x;
+      prev_y = y;
+      cur_y = y;
+    } else {
+      lDown = false;
+    }
+  } else if (button == GLUT_MIDDLE_BUTTON) {
+    if (state == GLUT_DOWN)
+      mDown = true;
+    else
+      mDown = false;
+  }
 }
 
 void MouseMotion(int x, int y) {
   // TODO implement arc ball and zoom
+  if (lDown) {
+    cur_x = x;
+    cur_y = y;
+  }
   glutPostRedisplay();
+}
+
+void setVectors() {
+  start = getArcBallVector(prev_x, prev_y);
+  end = getArcBallVector(cur_x, cur_y);
+}
+
+//---------------------------------------//
+// Returns a guaranteed unit vector
+// between where the mouse click and drag
+// has occurred
+//---------------------------------------//
+Vec3f getArcBallVector(int x, int y) {
+  float xf, yf, zf;
+  xf = x / window_width * 2.0f - 1.0;
+  yf = x / window_height * 2.0f - 1.0;
+  float temp = xf * xf + yf * yf;
+
+  if (temp <= 1.0f)
+    zf = sqrt(1.0 - temp);
+
+  //  Handles the case where the mouse is outside the circle
+  else
+    zf = 0.0f;
+
+  return Vec3f::makeVec(xf, -1 * yf, zf).unit();
 }
 
 void Keyboard(unsigned char key, int x, int y) {

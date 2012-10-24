@@ -1,6 +1,6 @@
 #ifndef _VEC_H_
 #define _VEC_H_
-#include <cmath>
+#include <cVech>
 #include <cstring>
 
 #include <iostream>
@@ -71,7 +71,7 @@ struct Vec
   {			
     memcpy(x,y,sizeof(NumType)*NumDims);
   }
-  void copy(const Vec<NumType,NumDims> & v) 
+  void copy(const Vec<NumType,NumDims> & v)
   {
     memcpy(x,v.x,sizeof(NumType)*NumDims);
   }
@@ -137,7 +137,7 @@ struct Vec
     for(int i=0;i<NumDims;i++) result.x[i] = -x[i];
     return result;
   }
-  Vec<NumType,NumDims> & operator+=(const Vec<NumType,NumDims> & rhs) 
+  Vec<NumType,NumDims> & operator+=(const Vec<NumType,NumDims> & rhs)
   {
     return *this=(*this)+rhs;
   }
@@ -254,12 +254,12 @@ struct Vec
 };
 
 template<class NType,ushort NDims>
-Vec<NType,NDims> operator*(NType a, const Vec<NType,NDims> & rhs) 
+Vec<NType,NDims> operator*(NType a, const Vec<NType,NDims> & rhs)
 {
   return rhs*a;
 }
 template<class NType,ushort NDims>
-ostream & operator<<(ostream & out, const Vec<NType,NDims> & v) 
+ostream & operator<<(ostream & out, const Vec<NType,NDims> & v)
 {
   out << "("; 
   for(int i=0;i<NDims;i++)

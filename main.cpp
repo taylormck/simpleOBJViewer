@@ -25,7 +25,7 @@ GLuint* texture_ids;
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
-Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
+Vec3d eye = Vec3d::makeVec(5.0, 5.0, 5.0);
 GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
@@ -36,7 +36,8 @@ float rotateAngle;
 //---------------------------------------------------------------------------//
 // Used for zoom
 bool rDown = false;
-float zoom = 1.0f;
+double zoomScale = 0.00005;
+double zoom = 1.0;
 int start_zoom_y, cur_zoom_y;
 
 //---------------------------------------------------------------------------//
@@ -53,7 +54,7 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
 
   setRotation();
-//  setZoom();
+  setZoom();
   DrawAxis();
 
   // TODO set up lighting, material properties and render mesh.
@@ -160,7 +161,7 @@ void MouseButton(int button, int state, int x, int y) {
       lDown = true;
     else
       lDown = false;
-  } else if (button == GLUT_MIDDLE_BUTTON) {
+  } else if (button == GLUT_RIGHT_BUTTON) {
     start_zoom_y = y;
     cur_zoom_y = y;
     if (state == GLUT_DOWN)
@@ -199,10 +200,23 @@ void setRotation() {
 }
 
 void setZoom() {
-//  zoom += (cur_zoom_y - start_zoom_y);
+  if (cur_zoom_y != start_zoom_y) {
+    //  Mouse is moving down, zoom in
+    if (cur_zoom_y > start_zoom_y) {
+      zoom += -1 * (cur_zoom_y - start_zoom_y) * zoomScale;
+    } else {
+      //  Mouse is moving up
+      zoom += (start_zoom_y - cur_zoom_y) * zoomScale;
+    }
 
-  eye *= zoom;
-  gluLookAt(eye.x[0], eye.x[1], eye.x[2], 0, 0, 0, 0, 1, 0);
+    eye = zoom * eye;
+    zoom = 1.0f;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(40.0, window_aspect, 1, 1500);
+    gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
+    glMatrixMode(GL_MODELVIEW);
+  }
 }
 
 //---------------------------------------//

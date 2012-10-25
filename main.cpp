@@ -36,7 +36,7 @@ float rotateAngle;
 //---------------------------------------------------------------------------//
 // Used for zoom
 bool rDown = false;
-double zoomScale = 0.00005;
+double zoomScale = 1.0;
 double zoom = 1.0;
 int start_zoom_y, cur_zoom_y;
 
@@ -200,17 +200,18 @@ void setRotation() {
 }
 
 void setZoom() {
+  //  Make sure mouse has moved first
   if (cur_zoom_y != start_zoom_y) {
-    //  Mouse is moving down, zoom in
-    if (cur_zoom_y > start_zoom_y) {
-      zoom += -1 * (cur_zoom_y - start_zoom_y) * zoomScale;
-    } else {
-      //  Mouse is moving up
-      zoom += (start_zoom_y - cur_zoom_y) * zoomScale;
-    }
+    zoom = ((1.0 * abs(cur_zoom_y - start_zoom_y)) / window_height);
+
+    //  When zooming in, we need to get the opposite fraction
+    if (cur_zoom_y > start_zoom_y) { zoom = 1.0 / zoom; }
 
     eye = zoom * eye;
-    zoom = 1.0f;
+    cout << "eye: <" << eye.x[0] << ", " << eye.x[1] << ", " << eye.x[2]
+         << "> " << endl << "zoom: " << zoom << endl
+         << "start_zoom_y: " << start_zoom_y << endl
+         << "cur_zoom_y: " << cur_zoom_y << endl;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(40.0, window_aspect, 1, 1500);

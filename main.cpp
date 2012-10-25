@@ -15,6 +15,8 @@ using namespace std;
 //---------------------------------------------------------------------------//
 // Function declarations
 Vec3f getArcBallVector(int, int);
+void setRotation();
+void setZoom();
 
 Mesh mesh;
 GLuint* texture_ids;
@@ -27,14 +29,15 @@ Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
 GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
-int prev_x = 0, prev_y = 0, cur_x = 0, cur_y = 0;
+int start_x = 0, start_y = 0, cur_x = 0, cur_y = 0;
 bool lDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
-void setRotation();
 //---------------------------------------------------------------------------//
 // Used for zoom
-bool mDown = false;
+bool rDown = false;
+float zoom = 1.0f;
+int start_zoom_y, cur_zoom_y;
 
 //---------------------------------------------------------------------------//
 // window parameters
@@ -50,7 +53,7 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
 
   setRotation();
-
+//  setZoom();
   DrawAxis();
 
   // TODO set up lighting, material properties and render mesh.
@@ -144,47 +147,62 @@ void DrawAxis() {
   glEnable(GL_LIGHTING);
 }
 
-
-
+//---------------------------------------------------------------------------//
+// Sets up the integers that track the mouse position
+// Based on which mouse click is being registered
 void MouseButton(int button, int state, int x, int y) {
   if (button == GLUT_LEFT_BUTTON) {
-    if (state == GLUT_DOWN) {
-      lDown = true;
-      prev_x = x;
-      cur_x = x;
-      prev_y = y;
-      cur_y = y;
-    } else {
-      cur_x = x;
-      cur_y = y;
-      lDown = false;
-    }
-  } else if (button == GLUT_MIDDLE_BUTTON) {
+    start_x = x;
+    cur_x = x;
+    start_y = y;
+    cur_y = y;
     if (state == GLUT_DOWN)
-      mDown = true;
+      lDown = true;
     else
-      mDown = false;
+      lDown = false;
+  } else if (button == GLUT_MIDDLE_BUTTON) {
+    start_zoom_y = y;
+    cur_zoom_y = y;
+    if (state == GLUT_DOWN)
+      rDown = true;
+    else
+      rDown = false;
   }
 }
 
+//---------------------------------------------------------------------------//
+// Update the current position integers upon movement
 void MouseMotion(int x, int y) {
   if (lDown) {
     cur_x = x;
     cur_y = y;
   }
+  if (rDown) {
+    cur_zoom_y = y;
+  }
   glutPostRedisplay();
 }
 
+//---------------------------------------------------------------------------//
+//  Sets up the rotation vector and angle, then rotates
+//  Should rotate the entire scene, including the lights
 void setRotation() {
-  start = getArcBallVector(prev_x, prev_y);
+  start = getArcBallVector(start_x, start_y);
   end = getArcBallVector(cur_x, cur_y);
   rotateV = start ^ end;
   rotateAngle = start * end;
 
-  prev_x = cur_x;
-  prev_y = cur_y;
+  start_x = cur_x;
+  start_y = cur_y;
 
   glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
+}
+
+void setZoom() {
+//  zoom += (cur_zoom_y - start_zoom_y);
+
+  eye *= zoom;
+  gluLookAt(eye.x[0], eye.x[1], eye.x[2], 0, 0, 0, 0, 1, 0);
 }
 
 //---------------------------------------//
@@ -194,8 +212,8 @@ void setRotation() {
 //---------------------------------------//
 Vec3f getArcBallVector(int x, int y) {
   float xf, yf, zf;
-  xf = (1.0 * x) / window_width;
-  yf = (1.0 * y) / window_height;
+  xf = (1.0 * x) / window_width * 2.0f - 1.0f;
+  yf = (1.0 * y) / window_height * 2.0f - 1.0f;
   float temp = xf * xf + yf * yf;
 
   if (temp <= 1.0f)

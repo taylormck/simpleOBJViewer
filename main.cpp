@@ -24,14 +24,14 @@ GLuint* texture_ids;
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
 Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
-Vec3d eyeNormal = eye.unit();
-GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 2, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
 int prev_x = 0, prev_y = 0, cur_x = 0, cur_y = 0;
 bool lDown = false;
-Vec3f start, end;
+Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
+void setRotation();
 //---------------------------------------------------------------------------//
 // Used for zoom
 bool mDown = false;
@@ -45,27 +45,17 @@ bool scene_lighting;
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(40.0, window_aspect, 1, 1500);
-
   // TODO call gluLookAt such that mesh fits nicely in viewport.
   // mesh.bb() may be useful.
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
-  // You can leave the axis in if you like.
 
-  glMultMatrixf(storedMatrix);
-//  MultMatrix(storedMatrix);
+  setRotation();
 
   DrawAxis();
 
   // TODO set up lighting, material properties and render mesh.
   // Be sure to call glEnable(GL_RESCALE_NORMAL) so your normals
   // remain normalized throughout transformations.
-
-
 
   glFlush();
   glutSwapBuffers();
@@ -130,6 +120,7 @@ void Init() {
   glLoadIdentity();
 
   gluPerspective(40.0, window_aspect, 1, 1500);
+  gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
 }
 
 void DrawAxis() {
@@ -156,7 +147,6 @@ void DrawAxis() {
 
 
 void MouseButton(int button, int state, int x, int y) {
-  // TODO implement arc ball and zoom
   if (button == GLUT_LEFT_BUTTON) {
     if (state == GLUT_DOWN) {
       lDown = true;
@@ -165,6 +155,8 @@ void MouseButton(int button, int state, int x, int y) {
       prev_y = y;
       cur_y = y;
     } else {
+      cur_x = x;
+      cur_y = y;
       lDown = false;
     }
   } else if (button == GLUT_MIDDLE_BUTTON) {
@@ -176,7 +168,6 @@ void MouseButton(int button, int state, int x, int y) {
 }
 
 void MouseMotion(int x, int y) {
-  // TODO implement arc ball and zoom
   if (lDown) {
     cur_x = x;
     cur_y = y;
@@ -184,9 +175,16 @@ void MouseMotion(int x, int y) {
   glutPostRedisplay();
 }
 
-void setVectors() {
+void setRotation() {
   start = getArcBallVector(prev_x, prev_y);
   end = getArcBallVector(cur_x, cur_y);
+  rotateV = start ^ end;
+  rotateAngle = start * end;
+
+  prev_x = cur_x;
+  prev_y = cur_y;
+
+  glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
 }
 
 //---------------------------------------//
@@ -196,8 +194,8 @@ void setVectors() {
 //---------------------------------------//
 Vec3f getArcBallVector(int x, int y) {
   float xf, yf, zf;
-  xf = x / window_width * 2.0f - 1.0;
-  yf = x / window_height * 2.0f - 1.0;
+  xf = (1.0 * x) / window_width;
+  yf = (1.0 * y) / window_height;
   float temp = xf * xf + yf * yf;
 
   if (temp <= 1.0f)

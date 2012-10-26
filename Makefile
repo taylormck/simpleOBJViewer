@@ -30,7 +30,7 @@ endif
 #LIBS = -lglut -lMesaGLU -lMesaGL -lm
 
 viewer: main.o io.o mesh.o texture.o material.o
-	./check-code main.cpp material.cpp material.h mesh.cpp mesh.h io.cpp io.h
+	./check-code main.cpp material.cpp material.h mesh.cpp mesh.h io.cpp io.h vertex.h color.h
 	${CC} ${CFLAGS} $(INCLUDE) -o viewer main.o io.o mesh.o texture.o material.o ${LIBDIR} ${LIBS}
 
 main.o: main.cpp io.h mesh.h texture.o
@@ -50,7 +50,7 @@ material.o: material.cpp material.h
 
 clean:
 	rm -f viewer *.o
-	
-TURNIN_FILES = bb.h common.h io.cpp io.h main.cpp Makefile material.cpp material.h mesh.cpp mesh.h README.txt texture.cpp texture.h vec.h
+
+TURNIN_FILES = Makefile README.txt *.h *.cpp
 turnin:
 	turnin --submit edwardsj project4 $(TURNIN_FILES)

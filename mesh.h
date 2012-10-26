@@ -81,6 +81,9 @@ class Mesh {
 
   std::vector<Material> _materials;
   std::vector<int> _polygon2material;
+  std::vector<Vertex3f> vertices;
+  std::vector<Vertex3f> textureVertices;
+  std::vector<Face> faces;
   int _cur_mtl;
   BoundingBox _bb;
 };

@@ -23,6 +23,20 @@ struct Color3f {
       c[2] = _b;
     }
 
+    Color3f operator=(const Color3f& rhs) {
+      c[0] = rhs.c[0];
+      c[1] = rhs.c[1];
+      c[2] = rhs.c[2];
+      return *this;
+    }
+
+    Color3f operator=(const Vec3f& rhs) {
+      c[0] = rhs.x[0];
+      c[1] = rhs.x[1];
+      c[2] = rhs.x[2];
+      return *this;
+    }
+
     float getRed() { return c[0]; }
     float getGreen() { return c[1]; }
     float getBlue() { return c[2]; }

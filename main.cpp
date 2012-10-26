@@ -25,7 +25,7 @@ GLuint* texture_ids;
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
-Vec3d eye = Vec3d::makeVec(5.0, 5.0, 5.0);
+Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
 GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
@@ -34,9 +34,13 @@ bool lDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
 //---------------------------------------------------------------------------//
-// Used for zoom
+//  Used for zoom
+//  zoomMin is set to 0.2 due to rendering problems when the eye is set
+//  closer to that.
+//  zoomMax is basically arbitrary, but details are near impossible to see
+//  at 10x distance
 bool rDown = false;
-double zoomScale = 1.0;
+const double zoomScale = 0.9f, zoomMin = 0.2, zoomMax = 10.0;
 double zoom = 1.0;
 int start_zoom_y, cur_zoom_y;
 
@@ -202,20 +206,18 @@ void setRotation() {
 void setZoom() {
   //  Make sure mouse has moved first
   if (cur_zoom_y != start_zoom_y) {
-    zoom = ((1.0 * abs(cur_zoom_y - start_zoom_y)) / window_height);
+    zoom += zoomScale * (start_zoom_y - cur_zoom_y) / window_width;
+    if (zoom < zoomMin) zoom = zoomMin;
+    else if (zoom > zoomMax) zoom = zoomMax;
 
-    //  When zooming in, we need to get the opposite fraction
-    if (cur_zoom_y > start_zoom_y) { zoom = 1.0 / zoom; }
+    Vec3d newEye = zoom * eye;
 
-    eye = zoom * eye;
-    cout << "eye: <" << eye.x[0] << ", " << eye.x[1] << ", " << eye.x[2]
-         << "> " << endl << "zoom: " << zoom << endl
-         << "start_zoom_y: " << start_zoom_y << endl
-         << "cur_zoom_y: " << cur_zoom_y << endl;
+    start_zoom_y = cur_zoom_y;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(40.0, window_aspect, 1, 1500);
-    gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
+    gluLookAt(newEye.x[0], newEye.x[1], newEye.x[2],  0, 0, 0,  0, 1, 0);
     glMatrixMode(GL_MODELVIEW);
   }
 }

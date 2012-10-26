@@ -30,7 +30,7 @@ endif
 #LIBS = -lglut -lMesaGLU -lMesaGL -lm
 
 viewer: main.o io.o mesh.o texture.o material.o
-	./check-code main.cpp material.cpp material.h mesh.cpp mesh.h io.cpp io.h vertex.h color.h
+	./check-code main.cpp material.cpp material.h mesh.cpp mesh.h io.cpp io.h vertex.h color.h polygon.h
 	${CC} ${CFLAGS} $(INCLUDE) -o viewer main.o io.o mesh.o texture.o material.o ${LIBDIR} ${LIBS}
 
 main.o: main.cpp io.h mesh.h texture.o

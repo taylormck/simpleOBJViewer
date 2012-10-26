@@ -7,6 +7,9 @@
 #include "./vec.h"
 #include "./bb.h"
 #include "./material.h"
+#include "./polygon.h"
+#include "./vertex.h"
+#include "./color.h"
 
 // This class represents a mesh, which contains vertices, polygons,
 // and material properties for each polygon.

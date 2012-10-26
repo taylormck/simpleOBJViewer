@@ -5,7 +5,6 @@
 #include "./vec.h"
 #include "./material.h"
 #include "./color.h"
-extern struct Color3f;
 
 struct Vertex3f {
     Vec3f point;
@@ -23,4 +22,4 @@ inline ostream & operator<<(ostream & out, const Vertex3f & v) {
   return out;
 }
 
-#endif vertex_h
+#endif

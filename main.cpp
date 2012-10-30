@@ -17,8 +17,7 @@ using namespace std;
 Vec3f getArcBallVector(int, int);
 void setRotation();
 void setZoom();
-void RenderMesh();
-void DrawFloor(float, float, float, float);
+void RenderMesh(Mesh* me);
 void DrawBounds();
 
 Mesh mesh;
@@ -29,6 +28,7 @@ GLuint* texture_ids;
 bool draw_normals = false;
 bool draw_axis = false;
 bool draw_box = false;
+bool debug = false;
 //---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
@@ -37,8 +37,9 @@ Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
 GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
+GLfloat m[16];
 int start_x = 0, start_y = 0, cur_x = 0, cur_y = 0;
-bool lDown = false;
+bool lDown = false, rotateNeeded = false, zoomNeeded = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
 //---------------------------------------------------------------------------//
@@ -66,13 +67,12 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
 
-  setRotation();
-  setZoom();
   if (draw_axis)
     DrawAxis();
   if (draw_box)
     DrawBounds();
-  RenderMesh();
+
+  RenderMesh(&mesh);
 
   // TODO set up lighting, material properties and render mesh.
   // Be sure to call glEnable(GL_RESCALE_NORMAL) so your normals
@@ -226,31 +226,61 @@ void MouseMotion(int x, int y) {
   if (lDown) {
     cur_x = x;
     cur_y = y;
+    rotateNeeded = true;
   }
   if (rDown) {
     cur_zoom_y = y;
+    zoomNeeded = true;
   }
   glutPostRedisplay();
+}
+
+//---------------------------------------------------------------------------//
+// Returns a guaranteed unit vector
+// between where the mouse click and drag
+// has occurred
+Vec3f getArcBallVector(int x, int y) {
+  float xf, yf, zf;
+  xf = (2.0f * x) / window_width - 1.0f;
+  yf = (2.0f * y) / window_height - 1.0f;
+  float temp = xf * xf + yf * yf;
+
+  if (temp <= 1.0f)
+    zf = sqrt(1.0 - temp);
+
+  //  Handles the case where the mouse is outside the circle
+  else
+    zf = 0.0f;
+
+  return Vec3f::makeVec(xf, -1.0 * yf, zf).unit();
 }
 
 //---------------------------------------------------------------------------//
 //  Sets up the rotation vector and angle, then rotates
 //  Should rotate the entire scene, including the lights
 void setRotation() {
-  start = getArcBallVector(start_x, start_y);
-  end = getArcBallVector(cur_x, cur_y);
-  rotateV = start ^ end;
-  rotateAngle = start * end;
+  if (rotateNeeded) {
+    start = getArcBallVector(start_x, start_y);
+    end = getArcBallVector(cur_x, cur_y);
+    rotateV = start ^ end;
+    rotateAngle = start * end;
 
-  start_x = cur_x;
-  start_y = cur_y;
+    start_x = cur_x;
+    start_y = cur_y;
 
-  glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
+    if (debug) {
+      cout << "Rotating [" << rotateAngle << ", " << rotateV.x[0] << ", "
+          << rotateV.x[1] << ", " << rotateV.x[2] << "]" << endl;
+      PrintMatrix();
+    }
+
+    glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
+    rotateNeeded = false;
+  }
 }
 
 void setZoom() {
-  //  Make sure mouse has moved first
-  if (cur_zoom_y != start_zoom_y) {
+  if (zoomNeeded) {
     zoom += zoomScale * (start_zoom_y - cur_zoom_y) / window_width;
     if (zoom < zoomMin) zoom = zoomMin;
     else if (zoom > zoomMax) zoom = zoomMax;
@@ -264,33 +294,14 @@ void setZoom() {
     gluPerspective(40.0, window_aspect, 1, 1500);
     gluLookAt(newEye.x[0], newEye.x[1], newEye.x[2],  0, 0, 0,  0, 1, 0);
     glMatrixMode(GL_MODELVIEW);
+
+    zoomNeeded = false;
   }
 }
 
-//---------------------------------------//
-// Returns a guaranteed unit vector
-// between where the mouse click and drag
-// has occurred
-//---------------------------------------//
-Vec3f getArcBallVector(int x, int y) {
-  float xf, yf, zf;
-  xf = (1.0 * x) / window_width * 2.0f - 1.0f;
-  yf = (1.0 * y) / window_height * 2.0f - 1.0f;
-  float temp = xf * xf + yf * yf;
-
-  if (temp <= 1.0f)
-    zf = sqrt(1.0 - temp);
-
-  //  Handles the case where the mouse is outside the circle
-  else
-    zf = 0.0f;
-
-  return Vec3f::makeVec(xf, -1.0 * yf, zf).unit();
-}
-
-void RenderMesh() {
-  vector<Face*> faces = mesh.getFaces();
-  vector<Vertex3f*> vt = mesh.getVertices();
+void RenderMesh(Mesh* me) {
+  vector<Face*> faces = me->getFaces();
+  vector<Vertex3f*> vt = me->getVertices();
   int limitv = vt.size();
 
   glEnable(GL_LIGHTING);
@@ -353,6 +364,11 @@ void Keyboard(unsigned char key, int x, int y) {
   glutPostRedisplay();
 }
 
+void Idle() {
+  setRotation();
+  setZoom();
+}
+
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     cout << endl;
@@ -374,6 +390,7 @@ int main(int argc, char *argv[]) {
   glutMotionFunc(MouseMotion);
   glutKeyboardFunc(Keyboard);
   glutDisplayFunc(Display);
+  glutIdleFunc(Idle);
 
   Init();
 
@@ -393,6 +410,8 @@ int main(int argc, char *argv[]) {
         draw_axis = true;
       } else if (string(argv[i]) == "-b") {
         draw_box = true;
+      } else if (string(argv[i]) == "-debug") {
+        debug = true;
       }
     }
 

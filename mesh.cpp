@@ -11,8 +11,8 @@ Mesh::Mesh() {
 
 // This will be called by the obj parser
 void Mesh::AddVertex(const Vec3f& v) {
-  Vertex3f* vt = new Vertex3f(v);
-  vertices.push_back(vt);
+//  Vertex3f* vt = new Vertex3f(v);
+//  vertices.push_back(vt);
 
   // updates the bounding box
   _bb(v);
@@ -20,8 +20,8 @@ void Mesh::AddVertex(const Vec3f& v) {
 
 // This will be called by the obj parser
 void Mesh::AddTextureVertex(const Vec3f& v) {
-  Vertex3f* vt = new Vertex3f(v);
-  textureVertices.push_back(vt);
+//  Vertex3f* vt = new Vertex3f(v);
+//  textureVertices.push_back(vt);
 }
 
 // p is the list of indices of vertices for this polygon.  For example,
@@ -40,16 +40,16 @@ void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
 
   Face* f = new Face(p, pt);
 
-  Vec3f u(vertices[f->vertices[1]]->point - vertices[f->vertices[0]]->point);
-  Vec3f v(vertices[f->vertices[2]]->point - vertices[f->vertices[0]]->point);
+//  Vec3f u(vertices[f->vertices[1]]->point - vertices[f->vertices[0]]->point);
+//  Vec3f v(vertices[f->vertices[2]]->point - vertices[f->vertices[0]]->point);
 
-  f->normal = (u^v).unit();
-  faces.push_back(f);
-
-  for (int i = p.size(); i >= 0; i++) {
-    Vec3f* n = &(vertices[p[i]]->normal);
-    *n = (*n + f->normal).unit();
-  }
+//  f->normal = (u^v).unit();
+//  faces.push_back(f);
+//
+//  for (int i = p.size(); i >= 0; i++) {
+//    Vec3f* n = &(vertices[p[i]]->normal);
+//    *n = (*n + f->normal).unit();
+//  }
 }
 
 // Computes a normal for each vertex.

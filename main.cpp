@@ -17,6 +17,7 @@ using namespace std;
 Vec3f getArcBallVector(int, int);
 void setRotation();
 void setZoom();
+void RenderMesh();
 
 Mesh mesh;
 GLuint* texture_ids;
@@ -25,7 +26,7 @@ GLuint* texture_ids;
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
-Vec3d eye = Vec3d::makeVec(2.0, 2.0, 5.0);
+Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
 GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
@@ -56,10 +57,12 @@ void Display() {
   // TODO call gluLookAt such that mesh fits nicely in viewport.
   // mesh.bb() may be useful.
   glMatrixMode(GL_MODELVIEW);
+  glEnable(GL_RESCALE_NORMAL);
 
   setRotation();
   setZoom();
   DrawAxis();
+  RenderMesh();
 
   // TODO set up lighting, material properties and render mesh.
   // Be sure to call glEnable(GL_RESCALE_NORMAL) so your normals
@@ -240,7 +243,24 @@ Vec3f getArcBallVector(int x, int y) {
   else
     zf = 0.0f;
 
-  return Vec3f::makeVec(xf, -1 * yf, zf).unit();
+  return Vec3f::makeVec(xf, yf, zf).unit();
+}
+
+void RenderMesh() {
+  vector<Face*> faces = mesh.getFaces();
+  vector<Vertex3f*> vt = mesh.getVertices();
+  int limitv = vt.size();
+
+  for (int i = faces.size() - 1; i >= 0; i--) {
+    int limitf = faces[i]->vertices.size();
+    glBegin(GL_POLYGON);
+    for (int j = 0; j < limitf; j++) {
+      Vertex3f v(*(vt[faces[i]->vertices[j]]));
+      glColor3fv(v.color.c);
+      glVertex3fv(v.point.x);
+    }
+    glEnd();
+  }
 }
 
 void Keyboard(unsigned char key, int x, int y) {

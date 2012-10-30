@@ -23,6 +23,8 @@ class Mesh {
   int _cur_mtl;
   BoundingBox _bb;
 
+  int cur_face;
+
  public:
   Mesh();
 
@@ -84,6 +86,9 @@ class Mesh {
   int num_materials() const { return _materials.size(); }
 
   void compute_normals();
+
+  vector<Vertex3f*> getVertices() { return vertices; }
+  vector<Face*> getFaces() { return faces; }
 };
 
 #endif

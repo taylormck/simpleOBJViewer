@@ -14,6 +14,15 @@
 // This class represents a mesh, which contains vertices, polygons,
 // and material properties for each polygon.
 class Mesh {
+ private:
+  std::vector<Material> _materials;
+  std::vector<int> _polygon2material;
+  std::vector<Vertex3f*> vertices;
+  std::vector<Vertex3f*> textureVertices;
+  std::vector<Face*> faces;
+  int _cur_mtl;
+  BoundingBox _bb;
+
  public:
   Mesh();
 
@@ -75,17 +84,6 @@ class Mesh {
   int num_materials() const { return _materials.size(); }
 
   void compute_normals();
-
- private:
-  // TODO add necessary data structures here
-
-  std::vector<Material> _materials;
-  std::vector<int> _polygon2material;
-  std::vector<Vertex3f> vertices;
-  std::vector<Vertex3f> textureVertices;
-  std::vector<Face> faces;
-  int _cur_mtl;
-  BoundingBox _bb;
 };
 
 #endif

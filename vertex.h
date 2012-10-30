@@ -2,14 +2,17 @@
 #define vertex_h
 
 #include <iostream>
+#include <vector>
 #include "./vec.h"
 #include "./material.h"
 #include "./color.h"
+#include "./polygon.h"
 
 struct Vertex3f {
     Vec3f point;
     Vec3f normal;
     Color3f color;
+    vector<int> faces;
 
     Vertex3f() {
       point = Vec3f::makeVec(0.0f, 0.0f, 0.0f);

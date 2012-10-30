@@ -16,7 +16,6 @@
 #include "./vertex.h"
 
 struct Face {
-//    vector<Vertex3f> vertices;
     vector<int> vertices;
     vector<int> textureVertices;
     Vec3f normal;

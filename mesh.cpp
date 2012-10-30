@@ -31,10 +31,6 @@ void Mesh::AddTextureVertex(const Vec3f& v) {
 //
 // pt is the list of texture indices for this polygon, similar to the
 // actual vertices described above.
-
-/**
- * Undefined if passed less than 3 vertices
- */
 void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
   // updates the poly2mat map
   _polygon2material.push_back(_cur_mtl);
@@ -61,6 +57,6 @@ void Mesh::compute_normals() {
     for (int j = vertices[i]->faces.size() - 1; j >= 0; j--) {
       *n += faces[vertices[i]->faces[j]]->normal;
     }
-    *n = vertices[i]->normal.unit();
+    *n = n->unit();
   }
 }

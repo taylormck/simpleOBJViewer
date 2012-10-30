@@ -18,10 +18,17 @@ Vec3f getArcBallVector(int, int);
 void setRotation();
 void setZoom();
 void RenderMesh();
+void DrawFloor(float, float, float, float);
+void DrawBounds();
 
 Mesh mesh;
 GLuint* texture_ids;
 
+//---------------------------------------------------------------------------//
+//  Booleans for options
+bool draw_normals = false;
+bool draw_axis = false;
+bool draw_box = false;
 //---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
@@ -61,7 +68,10 @@ void Display() {
 
   setRotation();
   setZoom();
-  DrawAxis();
+  if (draw_axis)
+    DrawAxis();
+  if (draw_box)
+    DrawBounds();
   RenderMesh();
 
   // TODO set up lighting, material properties and render mesh.
@@ -70,6 +80,38 @@ void Display() {
 
   glFlush();
   glutSwapBuffers();
+}
+
+void DrawRect(const Vec3f & u, const Vec3f & v, const Vec3f & o) {
+  glBegin(GL_LINE_STRIP);
+  glVertex3fv(o.x);
+  glVertex3fv((o+u).x);
+  glVertex3fv((o+u+v).x);
+  glVertex3fv((o+v).x);
+  glVertex3fv(o.x);
+  glEnd();
+}
+
+void DrawBounds() {
+  BoundingBox bb = mesh.bb();
+  Vec3f u, v, m1[] = {bb.min, bb.max}, m2[] = {bb.max, bb.min};
+  glColor3f(0, 0, 1);
+  glLineWidth(1.0);
+  glDisable(GL_LIGHTING);
+  for (int k = 0; k < 2; k++) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = i+1; j < 3; j++) {
+        u = m1[k];
+        v = m1[k];
+        u.x[i] = m2[k].x[i];
+        v.x[j] = m2[k].x[j];
+        u = u-m1[k];
+        v = v-m1[k];
+        DrawRect(u, v, m1[k]);
+      }
+    }
+  }
+  glEnable(GL_LIGHTING);
 }
 
 void PrintMatrix(GLfloat* m) {
@@ -138,7 +180,7 @@ void DrawAxis() {
   glDisable(GL_LIGHTING);
   glLineWidth(4);
   const Vec3f c = {0, 0, 0};
-  const float L = 1;
+  const float L = 100.0;
   const Vec3f X = {L, 0, 0}, Y = {0, L, 0}, Z = {0, 0, L};
 
   glBegin(GL_LINES);
@@ -243,7 +285,7 @@ Vec3f getArcBallVector(int x, int y) {
   else
     zf = 0.0f;
 
-  return Vec3f::makeVec(xf, yf, zf).unit();
+  return Vec3f::makeVec(xf, -1.0 * yf, zf).unit();
 }
 
 void RenderMesh() {
@@ -251,25 +293,64 @@ void RenderMesh() {
   vector<Vertex3f*> vt = mesh.getVertices();
   int limitv = vt.size();
 
+  glEnable(GL_LIGHTING);
   for (int i = faces.size() - 1; i >= 0; i--) {
     int limitf = faces[i]->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
       Vertex3f v(*(vt[faces[i]->vertices[j]]));
       glColor3fv(v.color.c);
+      glNormal3fv(v.normal.x);
       glVertex3fv(v.point.x);
     }
     glEnd();
+
+    //  Draws normals of the vertices
+    if (draw_normals) {
+      glLineWidth(1.0f);
+      glColor3f(0.0f, 0.0f, 1.0f);
+      glDisable(GL_LIGHTING);
+      for (int j = 0; j < limitf; j++) {
+        Vertex3f v(*(vt[faces[i]->vertices[j]]));
+        glPushMatrix();
+        glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
+        glBegin(GL_LINES);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3fv(v.normal.x);
+        glEnd();
+        glPopMatrix();
+      }
+
+      Vertex3f v(*(vt[faces[i]->vertices[0]]));
+      glPushMatrix();
+      glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
+      glBegin(GL_LINES);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glVertex3fv(faces[i]->normal.x);
+      glEnd();
+      glPopMatrix();
+      glEnable(GL_LIGHTING);
+    }
   }
 }
 
 void Keyboard(unsigned char key, int x, int y) {
   switch (key) {
+    case 'a':
+      draw_axis = !(draw_axis);
+      break;
+    case 'b':
+      draw_box = !(draw_box);
+      break;
+    case 'n':
+      draw_normals = !(draw_normals);
+      break;
     case 'q':
     case 27:  // esc
       exit(0);
       break;
   }
+  glutPostRedisplay();
 }
 
 int main(int argc, char *argv[]) {
@@ -302,10 +383,17 @@ int main(int argc, char *argv[]) {
     string filename(argv[1]);
     cout << filename << endl;
 
-    // Detect whether to fix the light source(s) to the camera or the world
-    scene_lighting = false;
-    if (argc > 2 && string(argv[2]) == "-l") {
-      scene_lighting = true;
+    // Parse arguments
+    for (int i = 2; i < argc; i++) {
+      if (string(argv[i]) == "-l") {
+        scene_lighting = true;
+      } else if (string(argv[i]) == "-n") {
+        draw_normals = true;
+      } else if (string(argv[i]) == "-a") {
+        draw_axis = true;
+      } else if (string(argv[i]) == "-b") {
+        draw_box = true;
+      }
     }
 
     // Parse the obj file, compute the normals, read the textures

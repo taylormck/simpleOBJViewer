@@ -20,7 +20,7 @@ void setZoom();
 void RenderMesh(Mesh* me);
 void DrawBounds();
 void SetEye();
-void SetLighting();
+void setLighting();
 
 Mesh mesh;
 GLuint* texture_ids;
@@ -32,6 +32,7 @@ bool draw_axis = false;
 bool draw_box = false;
 bool debug = false;
 bool scene_lighting = false;
+int model = GL_SMOOTH;
 //---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
@@ -40,16 +41,13 @@ Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
 GLdouble cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
-//  zoomMin is set to 0.2 due to rendering problems when the eye is set
-//  closer to that.
-//  zoomMax is basically arbitrary, but details are near impossible to see
 //  at 10x distance
 GLfloat m[16];
 int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
 bool lDown = false, rDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
-const double zoomScale = 0.9f, zoomMin = 0.2, zoomMax = 10.0;
+const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
 double zoom = 1.0;
 
 //---------------------------------------------------------------------------//
@@ -65,15 +63,15 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
 
-
   // TODO set up lighting, material properties and render mesh.
+  SetEye();
+  glEnable(GL_LIGHTING);
+  glShadeModel(model);
+
   if (scene_lighting) {
-    SetLighting();
-    SetEye();
-  } else {
-    SetEye();
-    SetLighting();
+    setLighting();
   }
+  glMultMatrixd(cur_trans);
 
   if (draw_axis)
     DrawAxis();
@@ -81,8 +79,6 @@ void Display() {
     DrawBounds();
 
   RenderMesh(&mesh);
-
-
   glFlush();
   glutSwapBuffers();
 }
@@ -182,6 +178,7 @@ void Init() {
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
@@ -189,6 +186,9 @@ void Init() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(40.0, window_aspect, 1, 1500);
+
+  glMatrixMode(GL_MODELVIEW);
+  setLighting();
 }
 
 void DrawAxis() {
@@ -306,7 +306,6 @@ void SetEye() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
-  glMultMatrixd(cur_trans);
 }
 
 void RenderMesh(Mesh* me) {
@@ -345,30 +344,38 @@ void RenderMesh(Mesh* me) {
   }
 }
 
-void SetLighting() {
-  glEnable(GL_LIGHTING);
-  glShadeModel(GL_SMOOTH);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+void setLighting() {
   glEnable(GL_LIGHT0);
   static GLfloat light_dist = 1;
   static GLfloat dir = -.01;
   light_dist += dir;
   if (light_dist < 0.03) dir = .01;
   else if (light_dist > 1) dir = -.01;
-  // cout
-  const GLfloat light0_position[] = {
-      -150*light_dist, 150*light_dist, 300*light_dist, 1 };
-  const GLfloat light0_ambient[] = { 1, 0, 0, 1 };
-  const GLfloat light0_diffuse[] = { 0, 0, 1, 1 };
+
+  GLfloat light0_position[4];
+  if (scene_lighting) {
+    GLfloat temp[] = {
+        -150*light_dist, 150*light_dist, 300*light_dist, 1 };
+    light0_position[0] = -150 * light_dist;
+    light0_position[1] = 150 * light_dist;
+    light0_position[2] = 300 * light_dist;
+    light0_position[3] = 1;
+  } else {
+    Vec3d t = eye * zoom;
+    Vec3f tempEye = Vec3f::makeVec(static_cast<float>(t.x[0]),
+        static_cast<float>(t.x[1]),
+        static_cast<float>(t.x[2]));
+    memcpy(light0_position, tempEye.x, 3*sizeof(tempEye.x[0]));
+  }
+
+  const GLfloat light0_ambient[] = { 0.5, 0.5, 0.5, 1 };
+  const GLfloat light0_diffuse[] = { 0.5, 0.5, 1, 1 };
   const GLfloat light0_specular[] = { 1, 1, 1, 1 };
   glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
   glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
-  const GLfloat light0_att[] = { 0, 10 };
-  // glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, light0_att);
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.001);
 }
 
@@ -382,6 +389,16 @@ void Keyboard(unsigned char key, int x, int y) {
       break;
     case 'n':
       draw_normals = !(draw_normals);
+      break;
+    case 'f':
+      if (model == GL_FLAT) {
+        model = GL_SMOOTH;
+      } else {
+        model = GL_FLAT;
+      }
+      break;
+    case 'l':
+      scene_lighting = !(scene_lighting);
       break;
     case 'q':
     case 27:  // esc
@@ -439,6 +456,8 @@ int main(int argc, char *argv[]) {
         draw_box = true;
       } else if (string(argv[i]) == "-debug") {
         debug = true;
+      } else if (string(argv[i]) == "-f") {
+        model = GL_FLAT;
       }
     }
 

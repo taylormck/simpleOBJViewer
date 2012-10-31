@@ -35,7 +35,8 @@ bool debug = false;
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
 Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
-GLdouble storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+GLdouble firstMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+GLdouble secondMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 Vec3d rotateEye = Vec3d(eye);
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
@@ -186,9 +187,7 @@ void Init() {
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-
   gluPerspective(40.0, window_aspect, 1, 1500);
-  gluLookAt(eye.x[0], eye.x[1], eye.x[2],  0, 0, 0,  0, 1, 0);
 }
 
 void DrawAxis() {
@@ -278,29 +277,19 @@ void setRotation() {
     start = getArcBallVector(start_x, start_y);
     end = getArcBallVector(cur_x, cur_y);
     rotateV = start ^ end;
-    rotateAngle = start * end;
+    rotateAngle = acos(start * end) * 180 / PI;
 
     start_x = cur_x;
     start_y = cur_y;
 
-//    if (debug) {
-//      cout << "Rotating [" << rotateAngle << ", " << rotateV.x[0] << ", "
-//          << rotateV.x[1] << ", " << rotateV.x[2] << "]" << endl;
-//      PrintMatrix();
-//    }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadMatrixd(storedMatrix);
+    glLoadIdentity();
     glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
-    glGetDoublev(GL_MODELVIEW_MATRIX, storedMatrix);
+    glMultMatrixd(firstMatrix);
+    glGetDoublev(GL_MODELVIEW_MATRIX, firstMatrix);
     glPopMatrix();
 
-    rotateEye = storedMatrix * eye;
-
-    if (debug) {
-      cout << "rotateEye: " << rotateEye << endl << "matrix: " << endl;
-      PrintMatrix(storedMatrix);
-    }
     rotateNeeded = false;
   }
 }
@@ -317,12 +306,11 @@ void setZoom() {
 }
 
 void SetEye() {
-  Vec3d e = rotateEye * zoom;
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(40.0, window_aspect, 1, 1500);
-  gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
+  Vec3d e = eye * zoom;
   glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
+  glMultMatrixd(firstMatrix);
 }
 
 void RenderMesh(Mesh* me) {
@@ -344,19 +332,19 @@ void RenderMesh(Mesh* me) {
 
     //  Draws normals of the vertices
     if (draw_normals) {
-      glLineWidth(1.0f);
-      glColor3f(0.0f, 0.0f, 1.0f);
-      glDisable(GL_LIGHTING);
-      for (int j = 0; j < limitf; j++) {
-        Vertex3f v(*(vt[faces[i]->vertices[j]]));
-        glPushMatrix();
-        glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
-        glBegin(GL_LINES);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glVertex3fv(v.normal.x);
-        glEnd();
-        glPopMatrix();
-      }
+//      glLineWidth(1.0f);
+//      glColor3f(0.0f, 0.0f, 1.0f);
+//      glDisable(GL_LIGHTING);
+//      for (int j = 0; j < limitf; j++) {
+//        Vertex3f v(*(vt[faces[i]->vertices[j]]));
+//        glPushMatrix();
+//        glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
+//        glBegin(GL_LINES);
+//        glVertex3f(0.0f, 0.0f, 0.0f);
+//        glVertex3fv(v.normal.x);
+//        glEnd();
+//        glPopMatrix();
+//      }
 
       Vertex3f v(*(vt[faces[i]->vertices[0]]));
       glPushMatrix();

@@ -20,6 +20,7 @@ void setZoom();
 void RenderMesh(Mesh* me);
 void DrawBounds();
 void SetEye();
+void SetLighting();
 
 Mesh mesh;
 GLuint* texture_ids;
@@ -30,37 +31,31 @@ bool draw_normals = false;
 bool draw_axis = false;
 bool draw_box = false;
 bool debug = false;
+bool scene_lighting = false;
 //---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
 Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
-GLdouble firstMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
-GLdouble secondMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
-Vec3d rotateEye = Vec3d(eye);
+GLdouble cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
-// Variables used for ArcBall Rotation
-GLfloat m[16];
-int start_x = 0, start_y = 0, cur_x = 0, cur_y = 0;
-bool lDown = false, rotateNeeded = false, zoomNeeded = false;
-Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
-float rotateAngle;
-//---------------------------------------------------------------------------//
-//  Used for zoom
+// Variables used for ArcBall Rotation and zoom
 //  zoomMin is set to 0.2 due to rendering problems when the eye is set
 //  closer to that.
 //  zoomMax is basically arbitrary, but details are near impossible to see
 //  at 10x distance
-bool rDown = false;
+GLfloat m[16];
+int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
+bool lDown = false, rDown = false;
+Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
+float rotateAngle;
 const double zoomScale = 0.9f, zoomMin = 0.2, zoomMax = 10.0;
 double zoom = 1.0;
-int start_zoom_y, cur_zoom_y;
 
 //---------------------------------------------------------------------------//
 // window parameters
 int window_width = 800, window_height = 600;
 float window_aspect = window_width / static_cast<float>(window_height);
-bool scene_lighting;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -70,17 +65,23 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
 
+
+  // TODO set up lighting, material properties and render mesh.
+  if (scene_lighting) {
+    SetLighting();
+    SetEye();
+  } else {
+    SetEye();
+    SetLighting();
+  }
+
   if (draw_axis)
     DrawAxis();
   if (draw_box)
     DrawBounds();
 
-  SetEye();
   RenderMesh(&mesh);
 
-  // TODO set up lighting, material properties and render mesh.
-  // Be sure to call glEnable(GL_RESCALE_NORMAL) so your normals
-  // remain normalized throughout transformations.
 
   glFlush();
   glutSwapBuffers();
@@ -216,17 +217,17 @@ void DrawAxis() {
 // Based on which mouse click is being registered
 void MouseButton(int button, int state, int x, int y) {
   if (button == GLUT_LEFT_BUTTON) {
-    start_x = x;
-    cur_x = x;
-    start_y = y;
-    cur_y = y;
+    startx = x;
+    curx = x;
+    starty = y;
+    cury = y;
     if (state == GLUT_DOWN)
       lDown = true;
     else
       lDown = false;
   } else if (button == GLUT_RIGHT_BUTTON) {
-    start_zoom_y = y;
-    cur_zoom_y = y;
+    zoom_y0 = y;
+    zoom_y1 = y;
     if (state == GLUT_DOWN)
       rDown = true;
     else
@@ -238,13 +239,11 @@ void MouseButton(int button, int state, int x, int y) {
 // Update the current position integers upon movement
 void MouseMotion(int x, int y) {
   if (lDown) {
-    cur_x = x;
-    cur_y = y;
-    rotateNeeded = true;
+    curx = x;
+    cury = y;
   }
   if (rDown) {
-    cur_zoom_y = y;
-    zoomNeeded = true;
+    zoom_y1 = y;
   }
   glutPostRedisplay();
 }
@@ -273,35 +272,32 @@ Vec3f getArcBallVector(int x, int y) {
 //  Sets up the rotation vector and angle, then rotates
 //  Should rotate the entire scene, including the lights
 void setRotation() {
-  if (rotateNeeded) {
-    start = getArcBallVector(start_x, start_y);
-    end = getArcBallVector(cur_x, cur_y);
+  if (startx != curx || starty != cury) {
+    start = getArcBallVector(startx, starty);
+    end = getArcBallVector(curx, cury);
     rotateV = start ^ end;
     rotateAngle = acos(start * end) * 180 / PI;
 
-    start_x = cur_x;
-    start_y = cur_y;
+    startx = curx;
+    starty = cury;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
     glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
-    glMultMatrixd(firstMatrix);
-    glGetDoublev(GL_MODELVIEW_MATRIX, firstMatrix);
+    glMultMatrixd(cur_trans);
+    glGetDoublev(GL_MODELVIEW_MATRIX, cur_trans);
     glPopMatrix();
-
-    rotateNeeded = false;
   }
 }
 
 void setZoom() {
-  if (zoomNeeded) {
-    zoom += zoomScale * (start_zoom_y - cur_zoom_y) / window_width;
+  if (zoom_y0 != zoom_y1) {
+    zoom += zoomScale * (zoom_y0 - zoom_y1) / window_width;
     if (zoom < zoomMin) zoom = zoomMin;
     else if (zoom > zoomMax) zoom = zoomMax;
 
-    start_zoom_y = cur_zoom_y;
-    zoomNeeded = false;
+    zoom_y0 = zoom_y1;
   }
 }
 
@@ -310,7 +306,7 @@ void SetEye() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
-  glMultMatrixd(firstMatrix);
+  glMultMatrixd(cur_trans);
 }
 
 void RenderMesh(Mesh* me) {
@@ -318,7 +314,6 @@ void RenderMesh(Mesh* me) {
   vector<Vertex3f*> vt = me->getVertices();
   int limitv = vt.size();
 
-  glEnable(GL_LIGHTING);
   for (int i = faces.size() - 1; i >= 0; i--) {
     int limitf = faces[i]->vertices.size();
     glBegin(GL_POLYGON);
@@ -330,33 +325,51 @@ void RenderMesh(Mesh* me) {
     }
     glEnd();
 
-    //  Draws normals of the vertices
+    //  Draws normals of the faces at their vertices
     if (draw_normals) {
-//      glLineWidth(1.0f);
-//      glColor3f(0.0f, 0.0f, 1.0f);
-//      glDisable(GL_LIGHTING);
-//      for (int j = 0; j < limitf; j++) {
-//        Vertex3f v(*(vt[faces[i]->vertices[j]]));
-//        glPushMatrix();
-//        glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
-//        glBegin(GL_LINES);
-//        glVertex3f(0.0f, 0.0f, 0.0f);
-//        glVertex3fv(v.normal.x);
-//        glEnd();
-//        glPopMatrix();
-//      }
+      glDisable(GL_LIGHTING);
 
-      Vertex3f v(*(vt[faces[i]->vertices[0]]));
-      glPushMatrix();
-      glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
-      glBegin(GL_LINES);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glVertex3fv(faces[i]->normal.x);
-      glEnd();
-      glPopMatrix();
-      glEnable(GL_LIGHTING);
+      for (int j = 0; j < limitf; j++) {
+        Vertex3f v(*(vt[faces[i]->vertices[j]]));
+        glPushMatrix();
+        glColor3f(1, 0, 0);
+        glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
+        glBegin(GL_LINES);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3fv(v.normal.x);
+        glEnd();
+        glPopMatrix();
+      }
     }
+    glEnable(GL_LIGHTING);
   }
+}
+
+void SetLighting() {
+  glEnable(GL_LIGHTING);
+  glShadeModel(GL_SMOOTH);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  glEnable(GL_LIGHT0);
+  static GLfloat light_dist = 1;
+  static GLfloat dir = -.01;
+  light_dist += dir;
+  if (light_dist < 0.03) dir = .01;
+  else if (light_dist > 1) dir = -.01;
+  // cout
+  const GLfloat light0_position[] = {
+      -150*light_dist, 150*light_dist, 300*light_dist, 1 };
+  const GLfloat light0_ambient[] = { 1, 0, 0, 1 };
+  const GLfloat light0_diffuse[] = { 0, 0, 1, 1 };
+  const GLfloat light0_specular[] = { 1, 1, 1, 1 };
+  glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+  glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
+  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
+  const GLfloat light0_att[] = { 0, 10 };
+  // glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, light0_att);
+  glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.001);
 }
 
 void Keyboard(unsigned char key, int x, int y) {

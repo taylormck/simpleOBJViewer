@@ -44,7 +44,7 @@ void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
   faces.push_back(f);
 
   for (int i = p.size() - 1; i >= 0 ; i--) {
-    vertices[i]->faces.push_back(cur_face);
+    vertices[p[i]]->faces.push_back(cur_face);
   }
   cur_face++;
 }
@@ -52,11 +52,11 @@ void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
 // Computes a normal for each vertex.
 void Mesh::compute_normals() {
   for (int i = vertices.size() - 1; i >= 0; i--) {
-    Vec3f* n = &(vertices[i]->normal);
-    *n = Vec3f::makeVec(0.0f, 0.0f, 0.0f);
-    for (int j = vertices[i]->faces.size() - 1; j >= 0; j--) {
-      *n += faces[vertices[i]->faces[j]]->normal;
+    Vertex3f* v = vertices[i];
+    v->normal = Vec3f::makeVec(0, 0, 0);
+    for (int j = v->faces.size() - 1; j >= 0; j--) {
+      v->normal += (faces[v->faces[j]])->normal;
     }
-    *n = n->unit();
+    v->normal = v->normal.unit();
   }
 }

@@ -19,6 +19,7 @@ void setRotation();
 void setZoom();
 void RenderMesh(Mesh* me);
 void DrawBounds();
+void SetEye();
 
 Mesh mesh;
 GLuint* texture_ids;
@@ -34,7 +35,8 @@ bool debug = false;
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
 Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
-GLfloat storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+GLdouble storedMatrix[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+Vec3d rotateEye = Vec3d(eye);
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation
 GLfloat m[16];
@@ -72,6 +74,7 @@ void Display() {
   if (draw_box)
     DrawBounds();
 
+  SetEye();
   RenderMesh(&mesh);
 
   // TODO set up lighting, material properties and render mesh.
@@ -115,6 +118,18 @@ void DrawBounds() {
 }
 
 void PrintMatrix(GLfloat* m) {
+  cout.precision(2);
+  int w = 6;
+  for (int i = 0; i < 4; ++i) {
+    cout << setprecision(2) << setw(w) << m[i] << " "
+        << setprecision(2) << setw(w) << m[i+4] << " "
+        << setprecision(2) << setw(w) << m[i+8] << " "
+        << setprecision(2) << setw(w) << m[i+12] << " "
+        << endl;
+  }
+  cout << endl;
+}
+void PrintMatrix(GLdouble* m) {
   cout.precision(2);
   int w = 6;
   for (int i = 0; i < 4; ++i) {
@@ -268,13 +283,24 @@ void setRotation() {
     start_x = cur_x;
     start_y = cur_y;
 
-    if (debug) {
-      cout << "Rotating [" << rotateAngle << ", " << rotateV.x[0] << ", "
-          << rotateV.x[1] << ", " << rotateV.x[2] << "]" << endl;
-      PrintMatrix();
-    }
-
+//    if (debug) {
+//      cout << "Rotating [" << rotateAngle << ", " << rotateV.x[0] << ", "
+//          << rotateV.x[1] << ", " << rotateV.x[2] << "]" << endl;
+//      PrintMatrix();
+//    }
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadMatrixd(storedMatrix);
     glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
+    glGetDoublev(GL_MODELVIEW_MATRIX, storedMatrix);
+    glPopMatrix();
+
+    rotateEye = storedMatrix * eye;
+
+    if (debug) {
+      cout << "rotateEye: " << rotateEye << endl << "matrix: " << endl;
+      PrintMatrix(storedMatrix);
+    }
     rotateNeeded = false;
   }
 }
@@ -285,18 +311,18 @@ void setZoom() {
     if (zoom < zoomMin) zoom = zoomMin;
     else if (zoom > zoomMax) zoom = zoomMax;
 
-    Vec3d newEye = zoom * eye;
-
     start_zoom_y = cur_zoom_y;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(40.0, window_aspect, 1, 1500);
-    gluLookAt(newEye.x[0], newEye.x[1], newEye.x[2],  0, 0, 0,  0, 1, 0);
-    glMatrixMode(GL_MODELVIEW);
-
     zoomNeeded = false;
   }
+}
+
+void SetEye() {
+  Vec3d e = rotateEye * zoom;
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(40.0, window_aspect, 1, 1500);
+  gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
+  glMatrixMode(GL_MODELVIEW);
 }
 
 void RenderMesh(Mesh* me) {

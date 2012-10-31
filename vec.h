@@ -250,6 +250,8 @@ struct Vec
   friend ostream & operator<<(ostream & out, const Vec<NType,NDims> & v) ;
   template <class NType, ushort NDims>
   friend Vec<NType,NDims> operator*(NType a, const Vec<NType,NDims> & rhs);
+  template <class NType>
+  friend Vec<NType,3> operator*(NType* _m, const Vec<NType,3> & v);
 };
 
 template<class NType,ushort NDims>
@@ -268,6 +270,19 @@ ostream & operator<<(ostream & out, const Vec<NType,NDims> & v)
   }
   out << ")";
   return out;
+}
+
+//  Only defined for 3D vectors
+template <class NType>
+Vec<NType,3> operator*(NType* _m, const Vec<NType,3> & v) {
+    //  Matrix must be column major
+    NType m[16];
+    memcpy(m, _m, 16 * sizeof(NType));
+    Vec<NType,3> result;
+    result.x[0] = m[0]*v.x[0] + m[4]*v.x[1] + m[8]*v.x[2];
+    result.x[1] = m[1]*v.x[0] + m[5]*v.x[1] + m[9]*v.x[2];
+    result.x[2] = m[3]*v.x[0] + m[7]*v.x[1] + m[11]*v.x[2];
+    return result;
 }
 
 typedef Vec<float, 3 >  Vec3f;

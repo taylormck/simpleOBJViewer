@@ -51,7 +51,7 @@ float rotateAngle, zoom = 1.0;
 const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
 //---------------------------------------------------------------------------//
 // Lighting
-const float light1_pos[] = {200.0f, 200.0f, 200.0f};
+Vec3f light1_pos = 5.0f * eye;
 const GLfloat ambient[] = { 0.25f, 0.25f, 0.25f, 1.0f };
 const GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
@@ -70,20 +70,17 @@ void Display() {
   glEnable(GL_RESCALE_NORMAL);
 
   SetEye();
-  glEnable(GL_LIGHTING);
-  glShadeModel(model);
-  glMultMatrixf(cur_trans);
-  glEnable(light);
-  if (light == GL_LIGHT1) {
-    glLightfv(GL_LIGHT1, GL_POSITION, eye.x);
-  }
-
-
   if (draw_axis)
     DrawAxis();
 
-  center = -1.0f * (mesh.bb().center());
-  glTranslatef(center.x[0], center.x[1], center.x[2]);
+  glMultMatrixf(cur_trans);
+
+  glEnable(GL_LIGHTING);
+  glShadeModel(model);
+  glEnable(light);
+  if (light == GL_LIGHT1) {
+    glLightfv(GL_LIGHT1, GL_POSITION, light1_pos.x);
+  }
 
   if (draw_box)
     DrawBounds();
@@ -145,8 +142,9 @@ void Init() {
   gluPerspective(40.0, window_aspect, 1, 1500);
 
   glMatrixMode(GL_MODELVIEW);
-  BoundingBox bb = mesh.bb();
-  center = bb.center();
+  center = -1.0f * (mesh.bb().center());
+  glTranslatef(center.x[0], center.x[1], center.x[2]);
+  glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
   setLights();
 }
 
@@ -315,7 +313,7 @@ void RenderMesh(Mesh* me) {
 }
 
 void setLights() {
-  glLightfv(GL_LIGHT0, GL_POSITION, eye.x);
+  glLightfv(GL_LIGHT0, GL_POSITION, (eye + center).x);
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
@@ -397,20 +395,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  // Initialize GLUT
-  glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-  glutInitWindowSize(window_width, window_height);
-  glutInitWindowPosition(100, 100);
-  glutCreateWindow("Object viewer");
-  glutMouseFunc(MouseButton);
-  glutMotionFunc(MouseMotion);
-  glutKeyboardFunc(Keyboard);
-  glutDisplayFunc(Display);
-  glutIdleFunc(Idle);
-
-  Init();
-
   if (string(argv[1]) == "-s") {
     cout << "Create scene" << endl;
   } else {
@@ -440,6 +424,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
+
+
     // Parse the obj file, compute the normals, read the textures
 
     ParseObj(filename, mesh);
@@ -454,6 +440,19 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Initialize GLUT
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+  glutInitWindowSize(window_width, window_height);
+  glutInitWindowPosition(100, 100);
+  glutCreateWindow("Object viewer");
+  glutMouseFunc(MouseButton);
+  glutMotionFunc(MouseMotion);
+  glutKeyboardFunc(Keyboard);
+  glutDisplayFunc(Display);
+  glutIdleFunc(Idle);
+
+  Init();
   glutMainLoop();
 
   return 0;

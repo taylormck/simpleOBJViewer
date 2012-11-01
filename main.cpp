@@ -264,9 +264,9 @@ void SetEye() {
   Vec3f e = (eye * zoom);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-//  gluLookAt(e.x[0], e.x[1], e.x[2],
-//            center.x[0], center.x[1], center.x[2],
-//            0, 1, 0);
+  //  gluLookAt(e.x[0], e.x[1], e.x[2],
+  //            center.x[0], center.x[1], center.x[2],
+  //            0, 1, 0);
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
 }
 
@@ -333,25 +333,44 @@ void Keyboard(unsigned char key, int x, int y) {
   switch (key) {
     case 'a':
       draw_axis = !(draw_axis);
+      if (draw_axis) {
+        cout << "Drawing axises" << endl;
+      } else {
+        cout << "Hiding axises" << endl;
+      }
       break;
     case 'b':
       draw_box = !(draw_box);
+      if (draw_box) {
+        cout << "Drawing bounding box" << endl;
+      } else {
+        cout << "Hiding bounding box" << endl;
+      }
       break;
     case 'n':
       draw_normals = !(draw_normals);
+      if (draw_normals) {
+        cout << "Drawing normals" << endl;
+      } else {
+        cout << "Hiding normals" << endl;
+      }
       break;
     case 'f':
       if (model == GL_FLAT) {
         model = GL_SMOOTH;
+        cout << "Using smooth shading" << endl;
       } else {
         model = GL_FLAT;
+        cout << "Using flat shading" << endl;
       }
       break;
     case 'l':
       if (light == GL_LIGHT0) {
         light = GL_LIGHT1;
+        cout << "Fixed light." << endl;
       } else {
         light = GL_LIGHT0;
+        cout << "Headlight" << endl;
       }
       break;
     case 'q':
@@ -402,16 +421,22 @@ int main(int argc, char *argv[]) {
     for (int i = 2; i < argc; i++) {
       if (string(argv[i]) == "-l") {
         light = GL_LIGHT1;
+        cout << "Fixed light." << endl;
       } else if (string(argv[i]) == "-n") {
         draw_normals = true;
+        cout << "Drawing normals" << endl;
       } else if (string(argv[i]) == "-a") {
         draw_axis = true;
+        cout << "Drawing axises" << endl;
       } else if (string(argv[i]) == "-b") {
         draw_box = true;
+        cout << "Drawing bounding box" << endl;
       } else if (string(argv[i]) == "-debug") {
         debug = true;
+        cout << "Showing debug statements" << endl;
       } else if (string(argv[i]) == "-f") {
         model = GL_FLAT;
+        cout << "Using flat shading" << endl;
       }
     }
 

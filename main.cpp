@@ -39,6 +39,7 @@ int light = GL_LIGHT0;
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
 Vec3f eye = Vec3f::makeVec(100.0, 100.0, 250.0);
+Vec3f center = Vec3f::makeVec(0, 0, 0);
 GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
@@ -50,7 +51,11 @@ float rotateAngle, zoom = 1.0;
 const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
 //---------------------------------------------------------------------------//
 // Lighting
-const float light1_pos[] = {600.0, 600.0, 600.0};
+const float light1_pos[] = {200.0f, 200.0f, 200.0f};
+const GLfloat ambient[] = { 0.25f, 0.25f, 0.25f, 1.0f };
+const GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
+//---------------------------------------------------------------------------//
 //  Mesh, material, and texture details
 Mesh mesh;
 GLuint* texture_ids;
@@ -70,11 +75,16 @@ void Display() {
   glMultMatrixf(cur_trans);
   glEnable(light);
   if (light == GL_LIGHT1) {
-    glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
+    glLightfv(GL_LIGHT1, GL_POSITION, eye.x);
   }
+
 
   if (draw_axis)
     DrawAxis();
+
+  center = -1.0f * (mesh.bb().center());
+  glTranslatef(center.x[0], center.x[1], center.x[2]);
+
   if (draw_box)
     DrawBounds();
 
@@ -135,6 +145,8 @@ void Init() {
   gluPerspective(40.0, window_aspect, 1, 1500);
 
   glMatrixMode(GL_MODELVIEW);
+  BoundingBox bb = mesh.bb();
+  center = bb.center();
   setLights();
 }
 
@@ -249,9 +261,12 @@ void setZoom() {
 }
 
 void SetEye() {
-  Vec3f e = eye * zoom;
+  Vec3f e = (eye * zoom);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+//  gluLookAt(e.x[0], e.x[1], e.x[2],
+//            center.x[0], center.x[1], center.x[2],
+//            0, 1, 0);
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
 }
 
@@ -300,24 +315,16 @@ void RenderMesh(Mesh* me) {
 }
 
 void setLights() {
-  Vec3f pos = eye * zoom;
-  const GLfloat light0_ambient[] = { 0.25, 0.25, 0.25, 1 };
-  const GLfloat light0_diffuse[] = { 0.5, 0.5, 0.5, 1 };
-  const GLfloat light0_specular[] = { 1, 1, 1, 1 };
-  glLightfv(GL_LIGHT0, GL_POSITION, pos.x);
-  glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-  glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
+  glLightfv(GL_LIGHT0, GL_POSITION, eye.x);
+  glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.001);
 
-  const GLfloat light1_ambient[] = { 0.25, 0.25, 0.25, 1 };
-  const GLfloat light1_diffuse[] = { 0.5, 0.5, 0.5, 1 };
-  const GLfloat light1_specular[] = { 1, 1, 1, 1 };
-  glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
-  glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
-  glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
-  glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
+  glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+  glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+  glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
   glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1);
   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.001);
 }

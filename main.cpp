@@ -302,7 +302,7 @@ void RenderMesh(Mesh* me) {
 
 void setLights() {
   Vec3f pos = eye * zoom;
-  const GLfloat light0_ambient[] = { 0.75, 0.75, 0.75, 1 };
+  const GLfloat light0_ambient[] = { 0.25, 0.25, 0.25, 1 };
   const GLfloat light0_diffuse[] = { 0.5, 0.5, 0.5, 1 };
   const GLfloat light0_specular[] = { 1, 1, 1, 1 };
   glLightfv(GL_LIGHT0, GL_POSITION, pos.x);
@@ -312,7 +312,7 @@ void setLights() {
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.001);
 
-  const GLfloat light1_ambient[] = { 0.75, 0.75, 0.75, 1 };
+  const GLfloat light1_ambient[] = { 0.25, 0.25, 0.25, 1 };
   const GLfloat light1_diffuse[] = { 0.5, 0.5, 0.5, 1 };
   const GLfloat light1_specular[] = { 1, 1, 1, 1 };
   glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);

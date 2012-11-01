@@ -42,19 +42,17 @@ Vec3f eye = Vec3f::makeVec(100.0, 100.0, 250.0);
 GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
-//  at 10x distance
 GLfloat m[16];
 int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
 bool lDown = false, rDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
-float rotateAngle;
+float rotateAngle, zoom = 1.0;
 const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
-float zoom = 1.0;
 //---------------------------------------------------------------------------//
 //  Mesh, material, and texture details
 Mesh mesh;
 GLuint* texture_ids;
-Material* mtl = NULL;
+Material* mtl;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -64,7 +62,6 @@ void Display() {
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
 
-  // TODO set up lighting, material properties and render mesh.
   SetEye();
   glEnable(GL_LIGHTING);
   glShadeModel(model);
@@ -322,6 +319,7 @@ void RenderMesh(Mesh* me) {
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
     }
+
     int limitf = faces[i]->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
@@ -331,7 +329,6 @@ void RenderMesh(Mesh* me) {
       glVertex3fv(v.point.x);
     }
     glEnd();
-    mtl = NULL;
 
     //  Draws normals of the faces at their vertices
     if (draw_normals) {

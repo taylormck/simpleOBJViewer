@@ -142,10 +142,10 @@ void Init() {
   gluPerspective(40.0, window_aspect, 1, 1500);
 
   glMatrixMode(GL_MODELVIEW);
+  setLights();
   center = -1.0f * (mesh.bb().center());
   glTranslatef(center.x[0], center.x[1], center.x[2]);
   glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
-  setLights();
 }
 
 void DrawAxis() {
@@ -280,6 +280,7 @@ void RenderMesh(Mesh* me) {
       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
+      glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
     }
 
     int limitf = faces[i]->vertices.size();
@@ -313,7 +314,7 @@ void RenderMesh(Mesh* me) {
 }
 
 void setLights() {
-  glLightfv(GL_LIGHT0, GL_POSITION, (eye + center).x);
+  glLightfv(GL_LIGHT0, GL_POSITION, eye.x);
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, specular);

@@ -20,7 +20,9 @@ void setZoom();
 void RenderMesh(Mesh* me);
 void DrawBounds();
 void SetEye();
-void setLighting();
+void setEyeLight();
+void setWorldLight();
+void moveWorldLight();
 
 //---------------------------------------------------------------------------//
 // window parameters
@@ -32,8 +34,8 @@ bool draw_normals = false;
 bool draw_axis = false;
 bool draw_box = false;
 bool debug = false;
-bool scene_lighting = false;
 int model = GL_SMOOTH;
+int light = GL_LIGHT0;
 //---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
@@ -65,11 +67,11 @@ void Display() {
   SetEye();
   glEnable(GL_LIGHTING);
   glShadeModel(model);
-
-  if (scene_lighting) {
-    setLighting();
-  }
   glMultMatrixf(cur_trans);
+  glEnable(light);
+  if (light == GL_LIGHT1) {
+    moveWorldLight();
+  }
 
   if (draw_axis)
     DrawAxis();
@@ -77,6 +79,7 @@ void Display() {
     DrawBounds();
 
   RenderMesh(&mesh);
+  glDisable(light);
   glFlush();
   glutSwapBuffers();
 }
@@ -113,60 +116,6 @@ void DrawBounds() {
   glEnable(GL_LIGHTING);
 }
 
-void PrintMatrix(GLfloat* m) {
-  cout.precision(2);
-  int w = 6;
-  for (int i = 0; i < 4; ++i) {
-    cout << setprecision(2) << setw(w) << m[i] << " "
-        << setprecision(2) << setw(w) << m[i+4] << " "
-        << setprecision(2) << setw(w) << m[i+8] << " "
-        << setprecision(2) << setw(w) << m[i+12] << " "
-        << endl;
-  }
-  cout << endl;
-}
-void PrintMatrix(GLdouble* m) {
-  cout.precision(2);
-  int w = 6;
-  for (int i = 0; i < 4; ++i) {
-    cout << setprecision(2) << setw(w) << m[i] << " "
-        << setprecision(2) << setw(w) << m[i+4] << " "
-        << setprecision(2) << setw(w) << m[i+8] << " "
-        << setprecision(2) << setw(w) << m[i+12] << " "
-        << endl;
-  }
-  cout << endl;
-}
-
-void PrintMatrix(GLint matrix) {
-  GLfloat m[16];
-  glGetFloatv(matrix, m);
-  PrintMatrix(m);
-}
-
-void PrintMatrix() {
-  PrintMatrix(GL_MODELVIEW_MATRIX);
-}
-
-void LoadMatrix(GLfloat* m) {
-  // transpose to column-major
-  for (int i = 0; i < 4; ++i) {
-    for (int j = i; j < 4; ++j) {
-      swap(m[i*4+j], m[j*4+i]);
-    }
-  }
-  glLoadMatrixf(m);
-}
-
-void MultMatrix(GLfloat* m) {
-  // transpose to column-major
-  for (int i = 0; i < 4; ++i) {
-    for (int j = i; j < 4; ++j) {
-      swap(m[i*4+j], m[j*4+i]);
-    }
-  }
-  glMultMatrixf(m);
-}
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
@@ -186,7 +135,8 @@ void Init() {
   gluPerspective(40.0, window_aspect, 1, 1500);
 
   glMatrixMode(GL_MODELVIEW);
-  setLighting();
+  setEyeLight();
+  setWorldLight();
 }
 
 void DrawAxis() {
@@ -350,40 +300,38 @@ void RenderMesh(Mesh* me) {
   }
 }
 
-void setLighting() {
-  glEnable(GL_LIGHT0);
-  static GLfloat light_dist = 1;
-  static GLfloat dir = -.01;
-  light_dist += dir;
-  if (light_dist < 0.03) dir = .01;
-  else if (light_dist > 1) dir = -.01;
-
-  GLfloat light0_position[4];
-  //  if (scene_lighting) {
-  GLfloat temp[] = {
-      -150*light_dist, 150*light_dist, 300*light_dist, 1 };
-  light0_position[0] = -150 * light_dist;
-  light0_position[1] = 150 * light_dist;
-  light0_position[2] = 300 * light_dist;
-  light0_position[3] = 1;
-  //  } else {
-  //    Vec3f t = eye * zoom;
-  //    light0_position[0] = t.x[0];
-  //    light0_position[1] = t.x[1];
-  //    light0_position[2] = t.x[2];
-  //    light0_position[3] = 0;
-  //  }
-
+void setEyeLight() {
+  Vec3f pos = eye * zoom;
   const GLfloat light0_ambient[] = { 0.75, 0.75, 0.75, 1 };
   const GLfloat light0_diffuse[] = { 0.5, 0.5, 0.5, 1 };
   const GLfloat light0_specular[] = { 1, 1, 1, 1 };
-  glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+  glLightfv(GL_LIGHT0, GL_POSITION, pos.x);
   glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.001);
 }
+
+void setWorldLight() {
+  const float pos[] = {600.0, 600.0, 600.0};
+
+  const GLfloat light1_ambient[] = { 0.75, 0.75, 0.75, 1 };
+  const GLfloat light1_diffuse[] = { 0.5, 0.5, 0.5, 1 };
+  const GLfloat light1_specular[] = { 1, 1, 1, 1 };
+  glLightfv(GL_LIGHT1, GL_POSITION, pos);
+  glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
+  glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+  glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
+  glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1);
+  glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.001);
+}
+
+void moveWorldLight() {
+  const float pos[] = {600.0, 600.0, 600.0};
+  glLightfv(GL_LIGHT1, GL_POSITION, pos);
+}
+
 
 void Keyboard(unsigned char key, int x, int y) {
   switch (key) {
@@ -401,6 +349,13 @@ void Keyboard(unsigned char key, int x, int y) {
         model = GL_SMOOTH;
       } else {
         model = GL_FLAT;
+      }
+      break;
+    case 'l':
+      if (light == GL_LIGHT0) {
+        light = GL_LIGHT1;
+      } else {
+        light = GL_LIGHT0;
       }
       break;
     case 'q':
@@ -450,7 +405,7 @@ int main(int argc, char *argv[]) {
     // Parse arguments
     for (int i = 2; i < argc; i++) {
       if (string(argv[i]) == "-l") {
-        scene_lighting = true;
+        light = GL_LIGHT1;
       } else if (string(argv[i]) == "-n") {
         draw_normals = true;
       } else if (string(argv[i]) == "-a") {

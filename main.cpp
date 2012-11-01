@@ -21,7 +21,6 @@ void RenderMesh(Mesh* me);
 void DrawBounds();
 void SetEye();
 void setLights();
-void moveWorldLight();
 
 //---------------------------------------------------------------------------//
 // window parameters
@@ -71,7 +70,7 @@ void Display() {
   glMultMatrixf(cur_trans);
   glEnable(light);
   if (light == GL_LIGHT1) {
-    moveWorldLight();
+    glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
   }
 
   if (draw_axis)
@@ -322,11 +321,6 @@ void setLights() {
   glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1);
   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.001);
 }
-
-void moveWorldLight() {
-  glLightfv(GL_LIGHT1, GL_POSITION, light1_pos);
-}
-
 
 void Keyboard(unsigned char key, int x, int y) {
   switch (key) {

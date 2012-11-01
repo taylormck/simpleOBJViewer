@@ -12,7 +12,7 @@ n - shows the normals
 f - uses flat shading (default is smooth)
 debug - prints debug statements, for development purposes
 
-Note that the arguments must be separate and mush have the '-' flag in front
+Note that the arguments must be separate and must have the '-' flag in front
 
 The program can run with these as arguments or they can be typed at run time
 to alternate the option on or off).

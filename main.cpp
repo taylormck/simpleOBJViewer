@@ -126,6 +126,7 @@ void DrawBounds() {
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_TEXTURE_2D);
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LEQUAL);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -275,8 +276,9 @@ void SetEye() {
 
 void RenderMesh(Mesh* me) {
   vector<Face*> faces = me->getFaces();
-  vector<Vertex3f*> vt = me->getVertices();
-  int limitv = vt.size();
+  vector<Vertex3f*> verts = me->getVertices();
+  vector<Vec3f*> textVerts = me->getTextureVertices();
+  int limitv = verts.size();
 
   for (int i = faces.size() - 1; i >= 0; i--) {
     //  Set the material
@@ -286,14 +288,17 @@ void RenderMesh(Mesh* me) {
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
       glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
+      glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
     }
 
     int limitf = faces[i]->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
-      Vertex3f v(*(vt[faces[i]->vertices[j]]));
+      Vertex3f v(*(verts[faces[i]->vertices[j]]));
+      Vec3f vt(*(textVerts[faces[i]->vertices[j]]));
       glColor3fv(v.color.c);
       glNormal3fv(v.normal.x);
+      glTexCoord2fv(vt.x);
       glVertex3fv(v.point.x);
     }
     glEnd();
@@ -303,7 +308,7 @@ void RenderMesh(Mesh* me) {
       glDisable(GL_LIGHTING);
 
       for (int j = 0; j < limitf; j++) {
-        Vertex3f v(*(vt[faces[i]->vertices[j]]));
+        Vertex3f v(*(verts[faces[i]->vertices[j]]));
         glPushMatrix();
         glColor3f(1, 0, 0);
         glTranslatef(v.point.x[0], v.point.x[1], v.point.x[2]);
@@ -430,10 +435,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-
-
     // Parse the obj file, compute the normals, read the textures
-
     ParseObj(filename, mesh);
     mesh.compute_normals();
 

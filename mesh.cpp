@@ -19,7 +19,7 @@ void Mesh::AddVertex(const Vec3f& v) {
 
 // This will be called by the obj parser
 void Mesh::AddTextureVertex(const Vec3f& v) {
-  Vertex3f* vt = new Vertex3f(v);
+  Vec3f* vt = new Vec3f(v);
   textureVertices.push_back(vt);
 }
 

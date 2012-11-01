@@ -18,7 +18,7 @@ class Mesh {
   std::vector<Material> _materials;
   std::vector<int> _polygon2material;
   std::vector<Vertex3f*> vertices;
-  std::vector<Vertex3f*> textureVertices;
+  std::vector<Vec3f*> textureVertices;
   std::vector<Face*> faces;
   int _cur_mtl;
   BoundingBox _bb;
@@ -89,6 +89,7 @@ class Mesh {
 
   vector<Vertex3f*> getVertices() { return vertices; }
   vector<Face*> getFaces() { return faces; }
+  vector<Vec3f*> getTextureVertices() { return textureVertices; }
 };
 
 #endif

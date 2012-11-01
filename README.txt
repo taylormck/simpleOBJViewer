@@ -13,7 +13,8 @@ f - uses flat shading (default is smooth)
 debug - prints debug statements, for development purposes
 
 The program can run with these as arguments or they can be typed at run time
-to alternate the option on or off.
+to alternate the option on or off (Except for 'l', the light source
+must remain constant).
 i.e., 
 viewer [.obj file] -b -a
 will run the viewer showing both a bounding box and the axis.

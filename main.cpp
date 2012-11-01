@@ -22,9 +22,10 @@ void DrawBounds();
 void SetEye();
 void setLighting();
 
-Mesh mesh;
-GLuint* texture_ids;
-
+//---------------------------------------------------------------------------//
+// window parameters
+int window_width = 800, window_height = 600;
+float window_aspect = window_width / static_cast<float>(window_height);
 //---------------------------------------------------------------------------//
 //  Booleans for options
 bool draw_normals = false;
@@ -37,8 +38,8 @@ int model = GL_SMOOTH;
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
-Vec3d eye = Vec3d::makeVec(200.0, 200.0, 500.0);
-GLdouble cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+Vec3f eye = Vec3f::makeVec(100.0, 100.0, 250.0);
+GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
 //  at 10x distance
@@ -48,12 +49,12 @@ bool lDown = false, rDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle;
 const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
-double zoom = 1.0;
-
+float zoom = 1.0;
 //---------------------------------------------------------------------------//
-// window parameters
-int window_width = 800, window_height = 600;
-float window_aspect = window_width / static_cast<float>(window_height);
+//  Mesh, material, and texture details
+Mesh mesh;
+GLuint* texture_ids;
+Material* mtl = NULL;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -71,7 +72,7 @@ void Display() {
   if (scene_lighting) {
     setLighting();
   }
-  glMultMatrixd(cur_trans);
+  glMultMatrixf(cur_trans);
 
   if (draw_axis)
     DrawAxis();
@@ -285,8 +286,8 @@ void setRotation() {
     glPushMatrix();
     glLoadIdentity();
     glRotatef(rotateAngle, rotateV.x[0], rotateV.x[1], rotateV.x[2]);
-    glMultMatrixd(cur_trans);
-    glGetDoublev(GL_MODELVIEW_MATRIX, cur_trans);
+    glMultMatrixf(cur_trans);
+    glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
     glPopMatrix();
   }
 }
@@ -302,7 +303,7 @@ void setZoom() {
 }
 
 void SetEye() {
-  Vec3d e = eye * zoom;
+  Vec3f e = eye * zoom;
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
@@ -314,6 +315,13 @@ void RenderMesh(Mesh* me) {
   int limitv = vt.size();
 
   for (int i = faces.size() - 1; i >= 0; i--) {
+    //  Set the material
+    if (me->num_materials() > 0) {
+      mtl = &(me->material(me->polygon2material(i)));
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
+    }
     int limitf = faces[i]->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
@@ -323,6 +331,7 @@ void RenderMesh(Mesh* me) {
       glVertex3fv(v.point.x);
     }
     glEnd();
+    mtl = NULL;
 
     //  Draws normals of the faces at their vertices
     if (draw_normals) {
@@ -353,23 +362,23 @@ void setLighting() {
   else if (light_dist > 1) dir = -.01;
 
   GLfloat light0_position[4];
-  if (scene_lighting) {
-    GLfloat temp[] = {
-        -150*light_dist, 150*light_dist, 300*light_dist, 1 };
-    light0_position[0] = -150 * light_dist;
-    light0_position[1] = 150 * light_dist;
-    light0_position[2] = 300 * light_dist;
-    light0_position[3] = 1;
-  } else {
-    Vec3d t = eye * zoom;
-    Vec3f tempEye = Vec3f::makeVec(static_cast<float>(t.x[0]),
-        static_cast<float>(t.x[1]),
-        static_cast<float>(t.x[2]));
-    memcpy(light0_position, tempEye.x, 3*sizeof(tempEye.x[0]));
-  }
+  //  if (scene_lighting) {
+  GLfloat temp[] = {
+      -150*light_dist, 150*light_dist, 300*light_dist, 1 };
+  light0_position[0] = -150 * light_dist;
+  light0_position[1] = 150 * light_dist;
+  light0_position[2] = 300 * light_dist;
+  light0_position[3] = 1;
+  //  } else {
+  //    Vec3f t = eye * zoom;
+  //    light0_position[0] = t.x[0];
+  //    light0_position[1] = t.x[1];
+  //    light0_position[2] = t.x[2];
+  //    light0_position[3] = 0;
+  //  }
 
-  const GLfloat light0_ambient[] = { 0.5, 0.5, 0.5, 1 };
-  const GLfloat light0_diffuse[] = { 0.5, 0.5, 1, 1 };
+  const GLfloat light0_ambient[] = { 0.75, 0.75, 0.75, 1 };
+  const GLfloat light0_diffuse[] = { 0.5, 0.5, 0.5, 1 };
   const GLfloat light0_specular[] = { 1, 1, 1, 1 };
   glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
   glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
@@ -396,9 +405,6 @@ void Keyboard(unsigned char key, int x, int y) {
       } else {
         model = GL_FLAT;
       }
-      break;
-    case 'l':
-      scene_lighting = !(scene_lighting);
       break;
     case 'q':
     case 27:  // esc

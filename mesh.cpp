@@ -14,8 +14,6 @@ Mesh::Mesh() {
 void Mesh::AddVertex(const Vec3f& v) {
   Vertex3f* vt = new Vertex3f(v);
   vertices.push_back(vt);
-
-  // updates the bounding box
   _bb(v);
 }
 
@@ -37,10 +35,13 @@ void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
 
   Face* f = new Face(p, pt);
 
-  Vec3f u(vertices[f->vertices[1]]->point - vertices[f->vertices[0]]->point);
-  Vec3f v(vertices[f->vertices[2]]->point - vertices[f->vertices[0]]->point);
+  //  Calculate the normal by crossing two vectors that define the plane
+  //  Two vectors obtained using three points on the plane
 
+  Vec3f u(vertices[p[1]]->point - vertices[p[0]]->point);
+  Vec3f v(vertices[p[2]]->point - vertices[p[0]]->point);
   f->normal = (u^v).unit();
+
   faces.push_back(f);
 
   for (int i = p.size() - 1; i >= 0 ; i--) {

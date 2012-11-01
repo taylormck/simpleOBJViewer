@@ -19,7 +19,6 @@ struct Face {
     vector<int> vertices;
     vector<int> textureVertices;
     Vec3f normal;
-    Material mtl;
 
     Face(const std::vector<int>& p, const std::vector<int>& pt) {
       vertices = p;

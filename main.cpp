@@ -38,7 +38,7 @@ int light = GL_LIGHT0;
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
-Vec3f eye = Vec3f::makeVec(100.0, 100.0, 250.0);
+Vec3f eye = Vec3f::makeVec(0.5, 0.5, 1.25);
 Vec3f center = Vec3f::makeVec(0, 0, 0);
 GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 //---------------------------------------------------------------------------//
@@ -143,8 +143,13 @@ void Init() {
 
   glMatrixMode(GL_MODELVIEW);
   setLights();
-  center = -1.0f * (mesh.bb().center());
+  BoundingBox bb = mesh.bb();
+  Vec3f diff = bb.max - bb.min;
+  float scale = max(diff.x[0], diff.x[1]);
+  eye *= scale;
+  center = -1.0f * (bb.center());
   glTranslatef(center.x[0], center.x[1], center.x[2]);
+
   glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
 }
 

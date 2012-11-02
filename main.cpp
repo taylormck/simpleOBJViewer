@@ -130,8 +130,6 @@ void Init() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-  glEnable(GL_TEXTURE_2D);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
@@ -273,19 +271,26 @@ void RenderMesh(Mesh* me) {
   vector<Face*> faces = me->getFaces();
   vector<Vertex3f*> verts = me->getVertices();
   vector<Vec3f*> textVerts = me->getTextureVertices();
-  int limitv = verts.size();
-  bool textured = false;
 
-  for (int i = faces.size() - 1; i >= 0; i--) {
+  bool textured = me->num_materials() > 0;
+  if (textured) {
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  }
+
+  int limitf = faces.size();
+  for (int i = 0; i < limitf; i++) {
     //  Set the material
-    if (textured || me->num_materials() > 0) {
-      textured = true;
-      mtl = me->getMaterial(i);
+    if (textured) {
+      int mtlIndex = me->polygon2material(i);
+      mtl = &(me->material(mtlIndex));
       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
       glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
-      glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
+      glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
+      if (debug) cout << "face: " << i << " mtl: " << mtlIndex
+          << " texture: " << texture_ids[mtlIndex] << endl;
     }
 
     Face* face = faces[i];
@@ -295,9 +300,11 @@ void RenderMesh(Mesh* me) {
       Vertex3f* v = (verts[face->vertices[j]]);
       glColor3fv(v->color.c);
       glNormal3fv(v->normal.x);
+      if (debug) cout << " v: " << v->point;
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
+        if (debug) cout << " vt: " << *vt << endl;
       }
       glVertex3fv(v->point.x);
     }
@@ -308,16 +315,11 @@ void RenderMesh(Mesh* me) {
       glDisable(GL_LIGHTING);
       for (int j = 0; j < limitf; j++) {
         Vertex3f* v = (verts[faces[i]->vertices[j]]);
-        glPushMatrix();
         glColor3f(1, 0, 0);
-        float x[3];
-        memcpy(x, v->point.x, 3 * sizeof(x[0]));
-        glTranslatef(x[0], x[1], x[2]);
         glBegin(GL_LINES);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glVertex3fv(v->normal.x);
+        glVertex3fv(v->point.x);
+        glVertex3fv((v->point + v->normal).x);
         glEnd();
-        glPopMatrix();
       }
       glEnable(GL_LIGHTING);
     }

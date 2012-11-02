@@ -273,10 +273,6 @@ void RenderMesh(Mesh* me) {
   vector<Vec3f*> textVerts = me->getTextureVertices();
 
   bool textured = me->num_materials() > 0;
-  if (textured) {
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  }
 
   int limitf = faces.size();
   for (int i = 0; i < limitf; i++) {
@@ -288,9 +284,12 @@ void RenderMesh(Mesh* me) {
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
       glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
+      glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
+//      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
       if (debug) cout << "face: " << i << " mtl: " << mtlIndex
-          << " texture: " << texture_ids[mtlIndex] << endl;
+          << " texture: " << texture_ids[mtlIndex]
+          << " mtl_t: " << mtl->texture_id() << endl;
     }
 
     Face* face = faces[i];
@@ -298,7 +297,6 @@ void RenderMesh(Mesh* me) {
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
       Vertex3f* v = (verts[face->vertices[j]]);
-      glColor3fv(v->color.c);
       glNormal3fv(v->normal.x);
       if (debug) cout << " v: " << v->point;
       if (textured) {
@@ -309,6 +307,7 @@ void RenderMesh(Mesh* me) {
       glVertex3fv(v->point.x);
     }
     glEnd();
+    glDisable(GL_TEXTURE_2D);
 
     //  Draws normals of the faces at their vertices
     if (draw_normals) {

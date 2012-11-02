@@ -273,23 +273,30 @@ void RenderMesh(Mesh* me) {
   vector<Vec3f*> textVerts = me->getTextureVertices();
 
   bool textured = me->num_materials() > 0;
+  int mtlIndex = -1;
+  glEnable(GL_TEXTURE_2D);
+  glColor3f(1, 1, 1);
 
   int limitf = faces.size();
   for (int i = 0; i < limitf; i++) {
     //  Set the material
+    //  Only need to do this once per material
     if (textured) {
-      int mtlIndex = me->polygon2material(i);
-      mtl = &(me->material(mtlIndex));
-      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
-      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
-      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
-      glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
-      glEnable(GL_TEXTURE_2D);
-      glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
-//      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-      if (debug) cout << "face: " << i << " mtl: " << mtlIndex
+      int temp = me->polygon2material(i);
+      if (mtlIndex != temp) {
+        mtlIndex = temp;
+        mtl = &(me->material(mtlIndex));
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
+        glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
+        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
+      }
+      if (debug) {
+        cout << "face: " << i << " mtl: " << mtlIndex
           << " texture: " << texture_ids[mtlIndex]
           << " mtl_t: " << mtl->texture_id() << endl;
+      }
     }
 
     Face* face = faces[i];
@@ -297,13 +304,13 @@ void RenderMesh(Mesh* me) {
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
       Vertex3f* v = (verts[face->vertices[j]]);
-      glNormal3fv(v->normal.x);
       if (debug) cout << " v: " << v->point;
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
         if (debug) cout << " vt: " << *vt << endl;
       }
+      glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
     }
     glEnd();

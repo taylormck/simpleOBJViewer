@@ -63,16 +63,12 @@ Material* mtl;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // TODO call gluLookAt such that mesh fits nicely in viewport.
-  // mesh.bb() may be useful.
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
 
-  SetEye();
+  SetEye();  //  Sets the camera
   if (draw_axis)
     DrawAxis();
-
   glMultMatrixf(cur_trans);
 
   glEnable(GL_LIGHTING);
@@ -126,7 +122,6 @@ void DrawBounds() {
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_TEXTURE_2D);
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LEQUAL);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -134,6 +129,9 @@ void Init() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
@@ -268,9 +266,6 @@ void SetEye() {
   Vec3f e = (eye * zoom);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  //  gluLookAt(e.x[0], e.x[1], e.x[2],
-  //            center.x[0], center.x[1], center.x[2],
-  //            0, 1, 0);
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
 }
 
@@ -279,11 +274,13 @@ void RenderMesh(Mesh* me) {
   vector<Vertex3f*> verts = me->getVertices();
   vector<Vec3f*> textVerts = me->getTextureVertices();
   int limitv = verts.size();
+  bool textured = false;
 
   for (int i = faces.size() - 1; i >= 0; i--) {
     //  Set the material
     if (me->num_materials() > 0) {
-      mtl = &(me->material(me->polygon2material(i)));
+      textured = true;
+      mtl = me->getMaterial(i);
       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
@@ -291,14 +288,17 @@ void RenderMesh(Mesh* me) {
       glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
     }
 
-    int limitf = faces[i]->vertices.size();
+    Face* face = faces[i];
+    int limitf = face->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
-      Vertex3f v(*(verts[faces[i]->vertices[j]]));
-      Vec3f vt(*(textVerts[faces[i]->vertices[j]]));
+      Vertex3f v(*(verts[face->vertices[j]]));
       glColor3fv(v.color.c);
       glNormal3fv(v.normal.x);
-      glTexCoord2fv(vt.x);
+      if (textured) {
+        Vec3f vt(*(textVerts[face->textureVertices[j]]));
+        glTexCoord2fv(vt.x);
+      }
       glVertex3fv(v.point.x);
     }
     glEnd();
@@ -306,7 +306,6 @@ void RenderMesh(Mesh* me) {
     //  Draws normals of the faces at their vertices
     if (draw_normals) {
       glDisable(GL_LIGHTING);
-
       for (int j = 0; j < limitf; j++) {
         Vertex3f v(*(verts[faces[i]->vertices[j]]));
         glPushMatrix();
@@ -318,8 +317,8 @@ void RenderMesh(Mesh* me) {
         glEnd();
         glPopMatrix();
       }
+      glEnable(GL_LIGHTING);
     }
-    glEnable(GL_LIGHTING);
   }
 }
 

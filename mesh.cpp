@@ -37,7 +37,6 @@ void Mesh::AddPolygon(const std::vector<int>& p, const std::vector<int>& pt) {
 
   //  Calculate the normal by crossing two vectors that define the plane
   //  Two vectors obtained using three points on the plane
-
   Vec3f u(vertices[p[1]]->point - vertices[p[0]]->point);
   Vec3f v(vertices[p[2]]->point - vertices[p[0]]->point);
   f->normal = (u^v).unit();

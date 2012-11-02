@@ -90,6 +90,7 @@ class Mesh {
   vector<Vertex3f*> getVertices() { return vertices; }
   vector<Face*> getFaces() { return faces; }
   vector<Vec3f*> getTextureVertices() { return textureVertices; }
+  Material* getMaterial(int i) { return &(_materials[polygon2material(i)]); }
 };
 
 #endif

@@ -59,7 +59,6 @@ const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
 //  Mesh, material, and texture details
 Mesh mesh;
 GLuint* texture_ids;
-Material* mtl;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -130,6 +129,9 @@ void Init() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+  //  Messes up the material color
+  //  To be used for emissive properties
+  //  glEnable(GL_COLOR_MATERIAL);
 
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
@@ -271,11 +273,12 @@ void RenderMesh(Mesh* me) {
   vector<Face*> faces = me->getFaces();
   vector<Vertex3f*> verts = me->getVertices();
   vector<Vec3f*> textVerts = me->getTextureVertices();
-
+  Material* mtl;
   bool textured = me->num_materials() > 0;
   int mtlIndex = -1;
-  glEnable(GL_TEXTURE_2D);
+
   glColor3f(1, 1, 1);
+  glEnable(GL_TEXTURE_2D);
 
   int limitf = faces.size();
   for (int i = 0; i < limitf; i++) {
@@ -286,16 +289,16 @@ void RenderMesh(Mesh* me) {
       if (mtlIndex != temp) {
         mtlIndex = temp;
         mtl = &(me->material(mtlIndex));
+        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
         glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
-        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
       }
       if (debug) {
         cout << "face: " << i << " mtl: " << mtlIndex
-          << " texture: " << texture_ids[mtlIndex]
-          << " mtl_t: " << mtl->texture_id() << endl;
+            << " texture: " << texture_ids[mtlIndex]
+            << " texture: " << mtl->texture() << endl;
       }
     }
 
@@ -310,11 +313,9 @@ void RenderMesh(Mesh* me) {
         glTexCoord2fv(vt->x);
         if (debug) cout << " vt: " << *vt << endl;
       }
-      glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
     }
     glEnd();
-    glDisable(GL_TEXTURE_2D);
 
     //  Draws normals of the faces at their vertices
     if (draw_normals) {
@@ -330,6 +331,7 @@ void RenderMesh(Mesh* me) {
       glEnable(GL_LIGHTING);
     }
   }
+  glDisable(GL_TEXTURE_2D);
 }
 
 void setLights() {

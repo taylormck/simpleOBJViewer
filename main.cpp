@@ -132,13 +132,6 @@ void Init() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-<<<<<<< HEAD
-=======
-  //  Messes up the material color
-  //  To be used for emissive properties
-  //  glEnable(GL_COLOR_MATERIAL);
-
->>>>>>> 50b82b8e6e2873b508019210205514adec092274
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
 
@@ -280,16 +273,11 @@ void RenderMesh(Mesh* me) {
   vector<Vertex3f*> verts = me->getVertices();
   vector<Vec3f*> textVerts = me->getTextureVertices();
   Material* mtl;
-<<<<<<< HEAD
 
-  bool textured = me->num_materials() > 0;
-  int mtlIndex = -1;
-=======
   bool textured = me->num_materials() > 0;
   int mtlIndex = -1;
 
   glColor3f(1, 1, 1);
->>>>>>> 50b82b8e6e2873b508019210205514adec092274
   glEnable(GL_TEXTURE_2D);
 
   int limitf = faces.size();
@@ -308,15 +296,9 @@ void RenderMesh(Mesh* me) {
         glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
       }
       if (debug) {
-<<<<<<< HEAD
         cout << "face: " << i << " mtl: " << mtlIndex << "\t"
           << " mtlIndex: " << texture_ids[mtlIndex] << "\t"
           << " texture: " << mtl->texture() << endl;
-=======
-        cout << "face: " << i << " mtl: " << mtlIndex
-            << " texture: " << texture_ids[mtlIndex]
-            << " texture: " << mtl->texture() << endl;
->>>>>>> 50b82b8e6e2873b508019210205514adec092274
       }
     }
 
@@ -330,6 +312,7 @@ void RenderMesh(Mesh* me) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
       }
+      glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
     }
     glEnd();

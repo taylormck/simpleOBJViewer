@@ -35,6 +35,9 @@ bool debug = false;
 int model = GL_SMOOTH;
 int light = GL_LIGHT0;
 //---------------------------------------------------------------------------//
+//  Option details
+GLfloat normalsColor[] = {1.0f, 0.0f, 0.0f};
+//---------------------------------------------------------------------------//
 // Used for the camera functions
 // eye is a 3d Vector that represents the Vector Eye - Point of Rotation
 // Our ArcBall is centered around the origin only for now
@@ -59,7 +62,6 @@ const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
 //  Mesh, material, and texture details
 Mesh mesh;
 GLuint* texture_ids;
-Material* mtl;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -129,7 +131,6 @@ void Init() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
@@ -271,11 +272,11 @@ void RenderMesh(Mesh* me) {
   vector<Face*> faces = me->getFaces();
   vector<Vertex3f*> verts = me->getVertices();
   vector<Vec3f*> textVerts = me->getTextureVertices();
+  Material* mtl;
 
   bool textured = me->num_materials() > 0;
   int mtlIndex = -1;
   glEnable(GL_TEXTURE_2D);
-  glColor3f(1, 1, 1);
 
   int limitf = faces.size();
   for (int i = 0; i < limitf; i++) {
@@ -286,42 +287,40 @@ void RenderMesh(Mesh* me) {
       if (mtlIndex != temp) {
         mtlIndex = temp;
         mtl = &(me->material(mtlIndex));
+        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
         glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
-        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
       }
       if (debug) {
-        cout << "face: " << i << " mtl: " << mtlIndex
-          << " texture: " << texture_ids[mtlIndex]
-          << " mtl_t: " << mtl->texture_id() << endl;
+        cout << "face: " << i << " mtl: " << mtlIndex << "\t"
+          << " mtlIndex: " << texture_ids[mtlIndex] << "\t"
+          << " texture: " << mtl->texture() << endl;
       }
     }
 
+    //  Draw the polygon
     Face* face = faces[i];
     int limitf = face->vertices.size();
     glBegin(GL_POLYGON);
     for (int j = 0; j < limitf; j++) {
       Vertex3f* v = (verts[face->vertices[j]]);
-      if (debug) cout << " v: " << v->point;
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
-        if (debug) cout << " vt: " << *vt << endl;
       }
       glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
     }
     glEnd();
-    glDisable(GL_TEXTURE_2D);
 
-    //  Draws normals of the faces at their vertices
+    //  Draws normals of the vertices
     if (draw_normals) {
       glDisable(GL_LIGHTING);
       for (int j = 0; j < limitf; j++) {
-        Vertex3f* v = (verts[faces[i]->vertices[j]]);
-        glColor3f(1, 0, 0);
+        Vertex3f* v = (verts[face->vertices[j]]);
+        glColor3fv(normalsColor);
         glBegin(GL_LINES);
         glVertex3fv(v->point.x);
         glVertex3fv((v->point + v->normal).x);
@@ -330,6 +329,7 @@ void RenderMesh(Mesh* me) {
       glEnable(GL_LIGHTING);
     }
   }
+  glDisable(GL_TEXTURE_2D);
 }
 
 void setLights() {

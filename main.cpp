@@ -201,10 +201,13 @@ void MouseMotion(int x, int y) {
   if (lDown) {
     curx = x;
     cury = y;
+    setRotation();
   }
   if (rDown) {
     zoom_y1 = y;
+    setZoom();
   }
+
   glutPostRedisplay();
 }
 
@@ -289,7 +292,7 @@ void RenderMesh(Mesh* me) {
       if (mtlIndex != temp) {
         mtlIndex = temp;
         mtl = &(me->material(mtlIndex));
-        glBindTexture(GL_TEXTURE_2D, texture_ids[mtlIndex]);
+        glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
@@ -311,6 +314,7 @@ void RenderMesh(Mesh* me) {
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
+        if (debug) cout << " vt: " << *vt << endl;
       }
       glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
@@ -402,11 +406,21 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Idle() {
-  setRotation();
-  setZoom();
 }
 
 int main(int argc, char *argv[]) {
+  // Initialize GLUT
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+  glutInitWindowSize(window_width, window_height);
+  glutInitWindowPosition(100, 100);
+  glutCreateWindow("Object viewer");
+  glutMouseFunc(MouseButton);
+  glutMotionFunc(MouseMotion);
+  glutKeyboardFunc(Keyboard);
+  glutDisplayFunc(Display);
+  glutIdleFunc(Idle);
+
   if (argc < 2) {
     cout << endl;
     cout << "Usage: ./viewer (filename.obj | -s) [-l]" << endl;
@@ -458,18 +472,6 @@ int main(int argc, char *argv[]) {
       material.LoadTexture(texture_ids[i]);
     }
   }
-
-  // Initialize GLUT
-  glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-  glutInitWindowSize(window_width, window_height);
-  glutInitWindowPosition(100, 100);
-  glutCreateWindow("Object viewer");
-  glutMouseFunc(MouseButton);
-  glutMotionFunc(MouseMotion);
-  glutKeyboardFunc(Keyboard);
-  glutDisplayFunc(Display);
-  glutIdleFunc(Idle);
 
   Init();
   glutMainLoop();

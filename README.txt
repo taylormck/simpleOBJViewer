@@ -22,5 +22,3 @@ will run the viewer showing both a bounding box and the axis.
 
 Pressing 'b' at during runtime will hide the bounding box.
 Pressing 'b' again will show it again.
-
-

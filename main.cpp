@@ -219,10 +219,10 @@ Vec3f getArcBallVector(int x, int y) {
   float xf, yf, zf;
   xf = (2.0f * x) / window_width - 1.0f;
   yf = (2.0f * y) / window_height - 1.0f;
-  float temp = xf * xf + yf * yf;
+  float discriminant = xf * xf + yf * yf;
 
-  if (temp <= 1.0f)
-    zf = sqrt(1.0 - temp);
+  if (discriminant <= 1.0f)
+    zf = sqrt(1.0 - discriminant);
 
   //  Handles the case where the mouse is outside the circle
   else

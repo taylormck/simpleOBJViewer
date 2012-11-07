@@ -129,7 +129,7 @@ void Init() {
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClearColor(0, 0, 0, 1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   // resize the window
@@ -280,7 +280,6 @@ void RenderMesh(Mesh* me) {
   bool textured = me->num_materials() > 0;
   int mtlIndex = -1;
 
-  glColor3f(1, 1, 1);
   glEnable(GL_TEXTURE_2D);
 
   int limitf = faces.size();
@@ -307,9 +306,9 @@ void RenderMesh(Mesh* me) {
 
     //  Draw the polygon
     Face* face = faces[i];
-    int limitf = face->vertices.size();
+    int limitv = face->vertices.size();
     glBegin(GL_POLYGON);
-    for (int j = 0; j < limitf; j++) {
+    for (int j = 0; j < limitv; j++) {
       Vertex3f* v = (verts[face->vertices[j]]);
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];

@@ -49,8 +49,8 @@ material.o: material.cpp material.h
 	${CC} ${CFLAGS} -c -o material.o $(INCLUDE) material.cpp
 
 clean:
-	rm -f viewer *.o
+	rm -f viewer *.o log
 
-TURNIN_FILES = Makefile README.txt *.h *.cpp
+TURNIN_FILES = Makefile README.txt *.h *.cpp original.*
 turnin:
 	turnin --submit edwardsj project4 $(TURNIN_FILES)

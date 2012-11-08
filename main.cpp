@@ -21,32 +21,27 @@ void RenderMesh(Mesh* me);
 void DrawBounds();
 void SetEye();
 void setLights();
+void Outline(Mesh* me);
 
 //---------------------------------------------------------------------------//
 // window parameters
 int window_width = 800, window_height = 600;
 float window_aspect = window_width / static_cast<float>(window_height);
 //---------------------------------------------------------------------------//
-//  Booleans for options
+//  Variables to run options and their default values
 bool draw_normals = false;
 bool draw_axis = false;
 bool draw_box = false;
 bool debug = false;
 int model = GL_SMOOTH;
 int light = GL_LIGHT0;
-//---------------------------------------------------------------------------//
-//  Option details
-GLfloat normalsColor[] = {1.0f, 0.0f, 0.0f};
-//---------------------------------------------------------------------------//
-// Used for the camera functions
-// eye is a 3d Vector that represents the Vector Eye - Point of Rotation
-// Our ArcBall is centered around the origin only for now
-Vec3f eye = Vec3f::makeVec(0.5, 0.5, 1.25);
-Vec3f center = Vec3f::makeVec(0, 0, 0);
-GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+bool cel_shade = false;
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
 GLfloat m[16];
+Vec3f eye = Vec3f::makeVec(0.5, 0.5, 1.25);
+Vec3f center = Vec3f::makeVec(0, 0, 0);
+GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
 bool lDown = false, rDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
@@ -62,6 +57,17 @@ const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
 //  Mesh, material, and texture details
 Mesh mesh;
 GLuint* texture_ids;
+//---------------------------------------------------------------------------//
+//  Colors definitions
+#define SKY_BLUE 0.196078f, 0.6f, 0.8f, 1
+#define SCARLET 0.55f, 0.09f, 0.09f, 1
+#define BLACK 0, 0, 0, 1
+GLfloat normals_color[] = {SCARLET};
+GLfloat outline_color[] = {BLACK};
+//---------------------------------------------------------------------------//
+//  Cell shading ?
+//  Well, at least I'll get a basic outline
+GLfloat outline_width;
 
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -89,9 +95,57 @@ void Display() {
     DrawBounds();
 
   RenderMesh(&mesh);
+
+  if (cel_shade)
+    Outline(&mesh);
+
   glDisable(light);
   glFlush();
   glutSwapBuffers();
+}
+
+//  Draws a "toony" outline
+void Outline(Mesh* me) {
+  glPushAttrib(GL_ALL_ATTRIB_BITS);  //  Don't step on any toes
+
+  //  Blend the outline in to make it look nice
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  //  Only draw the edges of the back facing polygons
+  glPolygonMode(GL_BACK, GL_LINE);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+  glDepthFunc(GL_LEQUAL);
+
+  glDisable(GL_LIGHTING);  //  No shading on the outline
+
+  //  These variables are defined up top,
+  //  so they can all be changed easier
+  glLineWidth(outline_width);
+  glColor3fv(outline_color);
+
+  glEnable(GL_LINE_SMOOTH);  //  Anti-alias the lines
+
+  //  This is a proper subset of the render mesh function
+  //  I decided not to use the whole thing to save
+  //  the extra computation
+  vector<Face*> faces = me->getFaces();
+  vector<Vertex3f*> verts = me->getVertices();
+
+  int limitf = faces.size();
+  for (int i = 0; i < limitf; i++) {
+    //  Draw the polygon
+    Face* face = faces[i];
+    int limitv = face->vertices.size();
+    glBegin(GL_POLYGON);
+    for (int j = 0; j < limitv; j++) {
+      Vertex3f* v = (verts[face->vertices[j]]);
+      glVertex3fv(v->point.x);
+    }
+    glEnd();
+  }
+  glPopAttrib();
 }
 
 void DrawRect(const Vec3f & u, const Vec3f & v, const Vec3f & o) {
@@ -134,7 +188,7 @@ void Init() {
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClearColor(0, 0, 0, 1.0f);
+  glClearColor(SKY_BLUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   // resize the window
@@ -154,6 +208,10 @@ void Init() {
   Vec3f diff = bb.max - bb.min;
   float scale = max(diff.x[0], diff.x[1]);
   eye *= scale;
+
+  //  The thickness of the outline depends on the size of the mesh
+  outline_width = scale * 5.0;
+
   center = -1.0f * (bb.center());
   glTranslatef(center.x[0], center.x[1], center.x[2]);
 
@@ -291,6 +349,13 @@ void RenderMesh(Mesh* me) {
   bool textured = me->num_materials() > 0;
   int mtlIndex = -1;
 
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+  //  if (cel_shade) {
+  //    glEnable(GL_POLYGON_OFFSET_FILL);
+  //    glPolygonOffset(-5.0f, -5.0f);
+  //  }
+
   glEnable(GL_TEXTURE_2D);
 
   int limitf = faces.size();
@@ -308,11 +373,6 @@ void RenderMesh(Mesh* me) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
         glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
       }
-      if (debug) {
-        cout << "face: " << i << " mtl: " << mtlIndex << "\t"
-          << " mtlIndex: " << texture_ids[mtlIndex] << "\t"
-          << " texture: " << mtl->texture() << endl;
-      }
     }
 
     //  Draw the polygon
@@ -324,7 +384,6 @@ void RenderMesh(Mesh* me) {
       if (textured) {
         Vec3f* vt = textVerts[face->textureVertices[j]];
         glTexCoord2fv(vt->x);
-        if (debug) cout << " vt: " << *vt << endl;
       }
       glNormal3fv(v->normal.x);
       glVertex3fv(v->point.x);
@@ -336,7 +395,7 @@ void RenderMesh(Mesh* me) {
       glDisable(GL_LIGHTING);
       for (int j = 0; j < limitv; j++) {
         Vertex3f* v = (verts[face->vertices[j]]);
-        glColor3fv(normalsColor);
+        glColor3fv(normals_color);
         glBegin(GL_LINES);
         glVertex3fv(v->point.x);
         glVertex3fv((v->point + v->normal).x);
@@ -345,7 +404,7 @@ void RenderMesh(Mesh* me) {
       glEnable(GL_LIGHTING);
     }
   }
-  glDisable(GL_TEXTURE_2D);
+  glPopAttrib();
 }
 
 void setLights() {
@@ -407,6 +466,15 @@ void Keyboard(unsigned char key, int x, int y) {
         cout << "Headlight" << endl;
       }
       break;
+    case 'c':
+      if (cel_shade) {
+        cel_shade = false;
+        cout << "Not cel shading" << endl;
+      } else {
+        cel_shade = true;
+        cout << "Cel shading" << endl;
+      }
+      break;
     case 'q':
     case 27:  // esc
       exit(0);
@@ -440,7 +508,7 @@ int main(int argc, char *argv[]) {
   string filename;
   if (string(argv[1]) == "-s") {
     cout << "Create scene" << endl;
-    filename = "scene/TheShopGirls.obj";
+    filename = "";
   } else {
     filename = string(argv[1]);
   }
@@ -477,6 +545,9 @@ int main(int argc, char *argv[]) {
     } else if (string(argv[i]) == "-f") {
       model = GL_FLAT;
       cout << "Using flat shading" << endl;
+    } else if (string(argv[i]) == "-c") {
+      cel_shade = true;
+      cout << "Using cel shading" << endl;
     }
   }
 

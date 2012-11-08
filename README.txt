@@ -4,7 +4,13 @@ CS ID: tsm544
 
 Comments:
 
+TOON OUTLINE !!
+While not actually cel (toon) shaded, this viewer has the option of rendering
+an outline around the mesh that gives it a similar appearance to cel shading.
+Shading is still unaffected, but for now, it looks pretty cool.
+
 Added a few displaying options
+c - enables the toon outline
 l - uses a light source fixed to the world (default is fixed to camera)
 b - shows a bounding box
 a - shows the axis

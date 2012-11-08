@@ -1,0 +1,15 @@
+newmtl grass
+       illum 2
+       Ka 0.3 0.3 0.3
+       Kd 0.7 0.7 0.7
+       Ks   1   1   1
+       map_Ka grass.jpg
+       map_Kd grass.jpg
+
+newmtl mountain
+       illum 2
+       Ka 0.3 0.3 0.3
+       Kd 0.7 0.7 0.7
+       Ks 0.2 0.2 0.2
+       map_Ka mountain.jpg
+       map_Kd mountian.jpg

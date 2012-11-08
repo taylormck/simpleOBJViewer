@@ -1,0 +1,34 @@
+#  Custom scene
+#  Taylor McKinney
+
+# Ground
+v -1000    0 -1000
+v  1000    0 -1000
+v -1000    0  1000
+v  1000    0  1000
+
+# Mountain1
+v   500    0  -500
+v   450    0  -450
+v   475    0  -425
+v   460  100  -460
+
+# vt's
+vt 0   0   0
+vt 1   0   0
+vt 0   1   0
+vt 1   1   0
+vt 0.5 1   0
+
+g Ground
+mtllib scene.mtl
+usemtl grass
+f 1/1 2/2 4/4 3/3
+
+g Mountain
+mtllib scene.mtl
+usemtl mountain
+f 5/1 6/2 8/5
+f 7/1 6/2 8/5
+f 7/1 5/2 8/5
+f 5/1 6/1 7/1

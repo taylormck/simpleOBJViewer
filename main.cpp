@@ -69,6 +69,44 @@ GLfloat outline_color[] = {BLACK};
 //  Well, at least I'll get a basic outline
 GLfloat outline_width;
 
+void Init() {
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+  glDepthFunc(GL_LEQUAL);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glClearColor(SKY_BLUE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_POLYGON_SMOOTH);  //  Enable anti-aliasing
+
+  // resize the window
+  window_aspect = window_width/static_cast<float>(window_height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(40.0, window_aspect, 1, 1500);
+
+  glMatrixMode(GL_MODELVIEW);
+  setLights();
+  BoundingBox bb = mesh.bb();
+
+  //  This may not always make the mesh fit "perfectly" in the
+  //  starting view window, but it reliably gets pretty close for
+  //  pretty cheap
+  Vec3f diff = bb.max - bb.min;
+  float scale = max(diff.x[0], diff.x[1]);
+  eye *= scale;
+
+  //  The thickness of the outline depends on the size of the mesh
+  outline_width = scale * 5.0;
+
+  center = -1.0f * (bb.center());
+  glTranslatef(center.x[0], center.x[1], center.x[2]);
+
+  glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
+}
+
 void Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -178,44 +216,6 @@ void DrawBounds() {
     }
   }
   glEnable(GL_LIGHTING);
-}
-
-
-void Init() {
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);
-  glDepthFunc(GL_LEQUAL);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClearColor(SKY_BLUE);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-  // resize the window
-  window_aspect = window_width/static_cast<float>(window_height);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(40.0, window_aspect, 1, 1500);
-
-  glMatrixMode(GL_MODELVIEW);
-  setLights();
-  BoundingBox bb = mesh.bb();
-
-  //  This may not always make the mesh fit "perfectly" in the
-  //  starting view window, but it reliably gets pretty close for
-  //  pretty cheap
-  Vec3f diff = bb.max - bb.min;
-  float scale = max(diff.x[0], diff.x[1]);
-  eye *= scale;
-
-  //  The thickness of the outline depends on the size of the mesh
-  outline_width = scale * 5.0;
-
-  center = -1.0f * (bb.center());
-  glTranslatef(center.x[0], center.x[1], center.x[2]);
-
-  glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
 }
 
 void DrawAxis() {

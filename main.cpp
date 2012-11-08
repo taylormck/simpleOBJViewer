@@ -132,7 +132,7 @@ void InitScene() {
   glMatrixMode(GL_MODELVIEW);
   setLights();
   eye = Vec3f::makeVec(20, 20, 50);
-  pan_scale = 20;
+  pan_scale *= 20.0f;
 }
 
 void Display() {
@@ -517,10 +517,10 @@ void Keyboard(unsigned char key, int x, int y) {
     case 'c':
       if (cel_shade) {
         cel_shade = false;
-        cout << "Drawing outline" << endl;
+        cout << "Not cel shading" << endl;
       } else {
         cel_shade = true;
-        cout << "Hiding outline" << endl;
+        cout << "Cel shading" << endl;
       }
       break;
     case 'r':
@@ -633,7 +633,7 @@ int main(int argc, char *argv[]) {
         cout << "Using flat shading" << endl;
       } else if (string(argv[i]) == "-c") {
         cel_shade = true;
-        cout << "Using outline" << endl;
+        cout << "Using cel shading" << endl;
       }
     }
   }

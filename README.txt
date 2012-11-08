@@ -10,16 +10,6 @@ an outline around the mesh that gives it a similar appearance to cel shading.
 Shading is still unaffected, but for now, it looks pretty cool.
 
 
-//---------------------------MULTIPLE MESHES !!------------------------------//
-Can render multiple meshes.
-Renders a hardcoded list when the -s flag is used.
-Otherwise, will render all obj files entered at the command line.
-i.e., ./viewer data/elk.obj data/teapot.obj data/sponza.obj
-will render all three meshes with their appropriate material properties
-and textures
-./viewer data/*.obj  will render all the objects in alphabetical order
-
-
 //---------------------------ANTI-ALIASING !!--------------------------------//
 Anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
 exactly which algorithm is being used.

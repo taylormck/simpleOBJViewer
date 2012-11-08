@@ -39,7 +39,7 @@ bool cel_shade = false;
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
 GLfloat m[16];
-Vec3f eye = Vec3f::makeVec(/*0.5, 0.5, 1.25*/1, 1, 2);
+Vec3f eye = Vec3f::makeVec(0.5, 0.5, 1.25);
 Vec3f center = Vec3f::makeVec(0, 0, 0);
 GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
@@ -55,8 +55,7 @@ const GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 const GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f};
 //---------------------------------------------------------------------------//
 //  Mesh, material, and texture details
-Mesh* mesh;
-vector<Mesh*> meshes;
+Mesh mesh;
 GLuint* texture_ids;
 //---------------------------------------------------------------------------//
 //  Colors definitions
@@ -68,7 +67,7 @@ GLfloat outline_color[] = {BLACK};
 //---------------------------------------------------------------------------//
 //  Cell shading ?
 //  Well, at least I'll get a basic outline
-GLfloat outline_width = 5.0;
+GLfloat outline_width;
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
@@ -81,8 +80,6 @@ void Init() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_POLYGON_SMOOTH);  //  Enable anti-aliasing
 
-  glDisable(GL_TEXTURE_2D);
-
   // resize the window
   window_aspect = window_width/static_cast<float>(window_height);
 
@@ -92,7 +89,7 @@ void Init() {
 
   glMatrixMode(GL_MODELVIEW);
   setLights();
-  BoundingBox bb = mesh->bb();
+  BoundingBox bb = mesh.bb();
 
   //  This may not always make the mesh fit "perfectly" in the
   //  starting view window, but it reliably gets pretty close for
@@ -100,6 +97,9 @@ void Init() {
   Vec3f diff = bb.max - bb.min;
   float scale = max(diff.x[0], diff.x[1]);
   eye *= scale;
+
+  //  The thickness of the outline depends on the size of the mesh
+  outline_width = scale * 5.0;
 
   center = -1.0f * (bb.center());
   glTranslatef(center.x[0], center.x[1], center.x[2]);
@@ -132,89 +132,29 @@ void Display() {
   if (draw_box)
     DrawBounds();
 
-  for (int i = 0; i < meshes.size(); i++) {
-    RenderMesh(meshes[i]);
+  RenderMesh(&mesh);
 
-    if (cel_shade)
-      Outline(meshes[i]);
-  }
+  if (cel_shade)
+    Outline(&mesh);
 
   glDisable(light);
   glFlush();
   glutSwapBuffers();
 }
 
-void RenderMesh(Mesh* me) {
-  vector<Face*> faces = me->getFaces();
-  vector<Vertex3f*> verts = me->getVertices();
-  vector<Vec3f*> textVerts = me->getTextureVertices();
-  Material* mtl;
-
-  bool textured = me->num_materials() > 0;
-  int mtlIndex = -1;
-
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
-  glEnable(GL_LIGHTING);
-
-  if (textured) glEnable(GL_TEXTURE_2D);
-
-  int limitf = faces.size();
-  for (int i = 0; i < limitf; i++) {
-    //  Set the material
-    //  Only need to do this once per material
-    if (textured) {
-      int temp = me->polygon2material(i);
-      if (mtlIndex != temp) {
-        mtlIndex = temp;
-        mtl = &(me->material(mtlIndex));
-        glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
-        glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
-      }
-    }
-
-    //  Draw the polygon
-    Face* face = faces[i];
-    int limitv = face->vertices.size();
-    glBegin(GL_POLYGON);
-    for (int j = 0; j < limitv; j++) {
-      Vertex3f* v = (verts[face->vertices[j]]);
-      if (textured) {
-        Vec3f* vt = textVerts[face->textureVertices[j]];
-        glTexCoord2fv(vt->x);
-      }
-      glNormal3fv(v->normal.x);
-      glVertex3fv(v->point.x);
-    }
-    glEnd();
-
-    //  Draws normals of the vertices
-    if (draw_normals) {
-      glDisable(GL_LIGHTING);
-      for (int j = 0; j < limitv; j++) {
-        Vertex3f* v = (verts[face->vertices[j]]);
-        glColor3fv(normals_color);
-        glBegin(GL_LINES);
-        glVertex3fv(v->point.x);
-        glVertex3fv((v->point + v->normal).x);
-        glEnd();
-      }
-      glEnable(GL_LIGHTING);
-    }
-  }
-  glPopAttrib();
-}
-
 //  Draws a "toony" outline
 void Outline(Mesh* me) {
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
+  glPushAttrib(GL_ALL_ATTRIB_BITS);  //  Don't step on any toes
+
+  //  Blend the outline in to make it look nice
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   //  Only draw the edges of the back facing polygons
+  glPolygonMode(GL_BACK, GL_LINE);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
-  glPolygonMode(GL_BACK, GL_LINE);
+  glDepthFunc(GL_LEQUAL);
 
   glDisable(GL_LIGHTING);  //  No shading on the outline
 
@@ -257,7 +197,7 @@ void DrawRect(const Vec3f & u, const Vec3f & v, const Vec3f & o) {
 }
 
 void DrawBounds() {
-  BoundingBox bb = mesh->bb();
+  BoundingBox bb = mesh.bb();
   Vec3f u, v, m1[] = {bb.min, bb.max}, m2[] = {bb.max, bb.min};
   glColor3f(0, 0, 1);
   glLineWidth(1.0);
@@ -279,7 +219,7 @@ void DrawBounds() {
 }
 
 void DrawAxis() {
-  BoundingBox bb = mesh->bb();
+  BoundingBox bb = mesh.bb();
   Vec3f diff = bb.max - bb.min;
   glDisable(GL_LIGHTING);
   glLineWidth(4);
@@ -361,8 +301,8 @@ Vec3f getArcBallVector(int x, int y) {
 }
 
 //---------------------------------------------------------------------------//
-//  Sets up the rotation vector and angle, then rotates and stores
-//  the new transformation matrix
+//  Sets up the rotation vector and angle, then rotates
+//  Should rotate the entire scene, including the lights
 void setRotation() {
   if (startx != curx || starty != cury) {
     start = getArcBallVector(startx, starty);
@@ -383,8 +323,6 @@ void setRotation() {
   }
 }
 
-//---------------------------------------------------------------------------//
-//  Simply changes the zoom factor whenever necessary
 void setZoom() {
   if (zoom_y0 != zoom_y1) {
     zoom += zoomScale * (zoom_y0 - zoom_y1) / window_width;
@@ -395,8 +333,6 @@ void setZoom() {
   }
 }
 
-//---------------------------------------------------------------------------//
-//  Sets the eye based on the zoom factor and calls gluLookAt
 void SetEye() {
   Vec3f e = (eye * zoom);
   glMatrixMode(GL_MODELVIEW);
@@ -404,11 +340,73 @@ void SetEye() {
   gluLookAt(e.x[0], e.x[1], e.x[2],  0, 0, 0,  0, 1, 0);
 }
 
-//---------------------------------------------------------------------------//
-//  Initializes both of the lights
-//  light0 stays at the eye, light1 moves with the scene
-//  Then in Display I simply enable the desired light before drawing
-//  The two lights are otherwise the same
+void RenderMesh(Mesh* me) {
+  vector<Face*> faces = me->getFaces();
+  vector<Vertex3f*> verts = me->getVertices();
+  vector<Vec3f*> textVerts = me->getTextureVertices();
+  Material* mtl;
+
+  bool textured = me->num_materials() > 0;
+  int mtlIndex = -1;
+
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+  //  if (cel_shade) {
+  //    glEnable(GL_POLYGON_OFFSET_FILL);
+  //    glPolygonOffset(-5.0f, -5.0f);
+  //  }
+
+  glEnable(GL_TEXTURE_2D);
+
+  int limitf = faces.size();
+  for (int i = 0; i < limitf; i++) {
+    //  Set the material
+    //  Only need to do this once per material
+    if (textured) {
+      int temp = me->polygon2material(i);
+      if (mtlIndex != temp) {
+        mtlIndex = temp;
+        mtl = &(me->material(mtlIndex));
+        glBindTexture(GL_TEXTURE_2D, mtl->texture_id());
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mtl->ambient().x);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mtl->diffuse().x);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mtl->specular().x);
+        glMateriali(GL_FRONT, GL_SHININESS, mtl->specular_coeff());
+      }
+    }
+
+    //  Draw the polygon
+    Face* face = faces[i];
+    int limitv = face->vertices.size();
+    glBegin(GL_POLYGON);
+    for (int j = 0; j < limitv; j++) {
+      Vertex3f* v = (verts[face->vertices[j]]);
+      if (textured) {
+        Vec3f* vt = textVerts[face->textureVertices[j]];
+        glTexCoord2fv(vt->x);
+      }
+      glNormal3fv(v->normal.x);
+      glVertex3fv(v->point.x);
+    }
+    glEnd();
+
+    //  Draws normals of the vertices
+    if (draw_normals) {
+      glDisable(GL_LIGHTING);
+      for (int j = 0; j < limitv; j++) {
+        Vertex3f* v = (verts[face->vertices[j]]);
+        glColor3fv(normals_color);
+        glBegin(GL_LINES);
+        glVertex3fv(v->point.x);
+        glVertex3fv((v->point + v->normal).x);
+        glEnd();
+      }
+      glEnable(GL_LIGHTING);
+    }
+  }
+  glPopAttrib();
+}
+
 void setLights() {
   glLightfv(GL_LIGHT0, GL_POSITION, eye.x);
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
@@ -424,8 +422,6 @@ void setLights() {
   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.001);
 }
 
-//---------------------------------------------------------------------------//
-//  Handles all the keyboard input and sets options appropriately
 void Keyboard(unsigned char key, int x, int y) {
   switch (key) {
     case 'a':
@@ -509,15 +505,24 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  vector<string> filenames;
   string filename;
   if (string(argv[1]) == "-s") {
     cout << "Create scene" << endl;
-    filenames.push_back("original.obj");
-    filenames.push_back("data/elk.obj");
-//    filenames.push_back("data/sponza.obj");
+    filename = "";
   } else {
-    filenames.push_back(string(argv[1]));
+    filename = string(argv[1]);
+  }
+
+  // Parse the obj file, compute the normals, read the textures
+  ParseObj(filename, mesh);
+  mesh.compute_normals();
+
+  texture_ids = new GLuint[mesh.num_materials()];
+  glGenTextures(mesh.num_materials(), texture_ids);
+
+  for (int i = 0; i < mesh.num_materials(); ++i) {
+    Material& material = mesh.material(i);
+    material.LoadTexture(texture_ids[i]);
   }
 
   // Parse arguments
@@ -543,32 +548,6 @@ int main(int argc, char *argv[]) {
     } else if (string(argv[i]) == "-c") {
       cel_shade = true;
       cout << "Using cel shading" << endl;
-    } else {  // Assume it's a filename
-      filenames.push_back(string(argv[i]));
-    }
-  }
-
-  int total_materials = 0;
-  for (int i = 0; i < filenames.size(); ++i) {
-    // Parse the obj file, compute the normals, read the textures
-    mesh = new Mesh();
-    ParseObj(filenames[i], *mesh);
-    mesh->compute_normals();
-
-    total_materials += mesh->num_materials();
-    meshes.push_back(mesh);
-  }
-
-  texture_ids = new GLuint[total_materials];
-  glGenTextures(total_materials, texture_ids);
-
-  int texture_count = 0;
-  for (int i = 0; i < meshes.size(); ++i) {
-    Mesh *m = meshes[i];
-    for (int j = 0; j < m->num_materials(); ++j) {
-      Material& material = m->material(j);
-      material.LoadTexture(texture_ids[texture_count]);
-      texture_count++;
     }
   }
 

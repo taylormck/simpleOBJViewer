@@ -8,9 +8,6 @@ Comments:
 While not actually cel (toon) shaded, this viewer has the option of rendering
 an outline around the mesh that gives it a similar appearance to cel shading.
 Shading is still unaffected, but for now, it looks pretty cool.
-(NB, I'm not sure, but it appears that the Utah teapot is "backwards", that
-is, the vertices appear to be run in clockwise.  This causes the outline to
-show up through the front of the teapot from time to time.)
 
 
 //---------------------------MULTIPLE MESHES !!------------------------------//

@@ -543,6 +543,8 @@ int main(int argc, char *argv[]) {
     } else if (string(argv[i]) == "-c") {
       cel_shade = true;
       cout << "Using cel shading" << endl;
+    } else {  // Assume it's a filename
+      filenames.push_back(string(argv[i]));
     }
   }
 
@@ -558,7 +560,7 @@ int main(int argc, char *argv[]) {
   }
 
   texture_ids = new GLuint[total_materials];
-  glGenTextures(mesh->num_materials(), texture_ids);
+  glGenTextures(total_materials, texture_ids);
 
   int texture_count = 0;
   for (int i = 0; i < meshes.size(); ++i) {

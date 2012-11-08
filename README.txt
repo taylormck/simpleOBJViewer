@@ -13,16 +13,6 @@ is, the vertices appear to be run in clockwise.  This causes the outline to
 show up through the front of the teapot from time to time.)
 
 
-//---------------------------MULTIPLE MESHES !!------------------------------//
-Can render multiple meshes.
-Renders a hardcoded list when the -s flag is used.
-Otherwise, will render all obj files entered at the command line.
-i.e., ./viewer data/elk.obj data/teapot.obj data/sponza.obj
-will render all three meshes with their appropriate material properties
-and textures
-./viewer data/*.obj  will render all the objects in alphabetical order
-
-
 //---------------------------ANTI-ALIASING !!--------------------------------//
 Anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
 exactly which algorithm is being used.

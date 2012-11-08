@@ -36,10 +36,11 @@ bool debug = false;
 int model = GL_SMOOTH;
 int light = GL_LIGHT0;
 bool cel_shade = false;
+GLfloat pan_scale = 0.02f;
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
 GLfloat m[16];
-Vec3f eye = Vec3f::makeVec(0.5, 0.5, 1.25);
+Vec3f eye = Vec3f::makeVec(/*0.5, 0.5, 1.25*/0, 0, 2.5);
 Vec3f center = Vec3f::makeVec(0, 0, 0);
 GLfloat cur_trans[] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
 int startx = 0, starty = 0, curx = 0, cury = 0, zoom_y0 = 0, zoom_y1 = 0;
@@ -47,6 +48,7 @@ bool lDown = false, rDown = false;
 Vec3f start = Vec3f::makeVec(0, 0, 1), end = Vec3f::makeVec(0, 0, 1), rotateV;
 float rotateAngle, zoom = 1.0;
 const double zoomScale = 0.9f, zoomMin = 0.01, zoomMax = 100.0;
+Vec3f translate;
 //---------------------------------------------------------------------------//
 // Lighting
 Vec3f light1_pos = 5.0f * eye;
@@ -97,12 +99,13 @@ void Init() {
   Vec3f diff = bb.max - bb.min;
   float scale = max(diff.x[0], diff.x[1]);
   eye *= scale;
+  pan_scale *= scale;
 
   //  The thickness of the outline depends on the size of the mesh
   outline_width = scale * 5.0;
 
-  center = -1.0f * (bb.center());
-  glTranslatef(center.x[0], center.x[1], center.x[2]);
+  translate = -1.0f * (bb.center());
+  glTranslatef(translate.x[0], translate.x[1], translate.x[2]);
 
   glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
 }
@@ -154,7 +157,6 @@ void Outline(Mesh* me) {
   glPolygonMode(GL_BACK, GL_LINE);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
-  glDepthFunc(GL_LEQUAL);
 
   glDisable(GL_LIGHTING);  //  No shading on the outline
 
@@ -187,6 +189,7 @@ void Outline(Mesh* me) {
 }
 
 void DrawRect(const Vec3f & u, const Vec3f & v, const Vec3f & o) {
+  glDisable(GL_LIGHTING);
   glBegin(GL_LINE_STRIP);
   glVertex3fv(o.x);
   glVertex3fv((o+u).x);
@@ -215,7 +218,6 @@ void DrawBounds() {
       }
     }
   }
-  glEnable(GL_LIGHTING);
 }
 
 void DrawAxis() {
@@ -238,7 +240,6 @@ void DrawAxis() {
   glVertex3fv(c.x);
   glVertex3fv((c+Z).x);
   glEnd();
-  glEnable(GL_LIGHTING);
 }
 
 //---------------------------------------------------------------------------//
@@ -475,12 +476,58 @@ void Keyboard(unsigned char key, int x, int y) {
         cout << "Cel shading" << endl;
       }
       break;
+    case 'r':
+      cout << "Resetting" << endl;
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glTranslatef(translate[0], translate[1], translate[2]);
+      glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
+      zoom = 1.0f;
+      break;
     case 'q':
     case 27:  // esc
       exit(0);
       break;
   }
   glutPostRedisplay();
+}
+
+void KeyboardSpecial(int key, int x, int y) {
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  switch (key) {
+    case GLUT_KEY_LEFT:
+      glTranslatef(pan_scale, 0, 0);
+      break;
+    case GLUT_KEY_RIGHT:
+      glTranslatef(-1 * pan_scale, 0, 0);
+      break;
+    case GLUT_KEY_UP:
+      glTranslatef(0, 0, pan_scale);
+      break;
+    case GLUT_KEY_DOWN:
+      glTranslatef(0, 0, -1 * pan_scale);
+      break;
+  }
+  glMultMatrixf(cur_trans);
+  glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
+  glutPostRedisplay();
+}
+
+void Reshape(int w, int h) {
+  if (h < 1) h = 1;
+
+  window_width = w;
+  window_height = h;
+  // resize the window
+  window_aspect = 1.0 * window_width / window_height;
+
+  glViewport(0, 0, w, h);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(40.0, window_aspect, 1, 1500);
+  glMatrixMode(GL_MODELVIEW);
 }
 
 int main(int argc, char *argv[]) {
@@ -493,7 +540,9 @@ int main(int argc, char *argv[]) {
   glutMouseFunc(MouseButton);
   glutMotionFunc(MouseMotion);
   glutKeyboardFunc(Keyboard);
+  glutSpecialFunc(KeyboardSpecial);
   glutDisplayFunc(Display);
+  glutReshapeFunc(Reshape);
 
   if (argc < 2) {
     cout << endl;

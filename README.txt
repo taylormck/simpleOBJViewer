@@ -10,6 +10,11 @@ an outline around the mesh that gives it a similar appearance to cel shading.
 Shading is still unaffected, but for now, it looks pretty cool.
 
 
+//---------------------------PANNING !!--------------------------------------//
+Feel free to use the arrow keys to pan around.
+Up is forward, down is backwards, left is left, and right is right.
+
+
 //---------------------------ANTI-ALIASING !!--------------------------------//
 Anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
 exactly which algorithm is being used.
@@ -17,12 +22,13 @@ exactly which algorithm is being used.
 
 //---------------------------RENDERING OPTIONS !!----------------------------//
 Added a few displaying options
-c - enables the toon outline
+c - switches the toon outline
 l - uses a light source fixed to the world (default is fixed to camera)
 b - shows a bounding box
 a - shows the axis
 n - shows the normals
 f - uses flat shading (default is smooth)
+r - resets to original view (runtime only)
 debug - prints debug statements, for development purposes
 
 Note that the arguments must be separate and must have the '-' flag in front

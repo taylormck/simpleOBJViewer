@@ -69,12 +69,17 @@ void Display() {
   glEnable(GL_RESCALE_NORMAL);
 
   SetEye();  //  Sets the camera
+  glMultMatrixf(cur_trans);
+
   if (draw_axis)
     DrawAxis();
-  glMultMatrixf(cur_trans);
 
   glEnable(GL_LIGHTING);
   glShadeModel(model);
+
+  //  Enables the desired light
+  //  If we are using scene lighting, replace the light in the
+  //  transformed scene
   glEnable(light);
   if (light == GL_LIGHT1) {
     glLightfv(GL_LIGHT1, GL_POSITION, light1_pos.x);
@@ -142,6 +147,10 @@ void Init() {
   glMatrixMode(GL_MODELVIEW);
   setLights();
   BoundingBox bb = mesh.bb();
+
+  //  This may not always make the mesh fit "perfectly" in the
+  //  starting view window, but it reliably gets pretty close for
+  //  pretty cheap
   Vec3f diff = bb.max - bb.min;
   float scale = max(diff.x[0], diff.x[1]);
   eye *= scale;
@@ -152,10 +161,12 @@ void Init() {
 }
 
 void DrawAxis() {
+  BoundingBox bb = mesh.bb();
+  Vec3f diff = bb.max - bb.min;
   glDisable(GL_LIGHTING);
   glLineWidth(4);
   const Vec3f c = {0, 0, 0};
-  const float L = 100.0;
+  const float L = 0.1 * max(diff.x[0], diff.x[1]);
   const Vec3f X = {L, 0, 0}, Y = {0, L, 0}, Z = {0, 0, L};
 
   glBegin(GL_LINES);
@@ -323,7 +334,7 @@ void RenderMesh(Mesh* me) {
     //  Draws normals of the vertices
     if (draw_normals) {
       glDisable(GL_LIGHTING);
-      for (int j = 0; j < limitf; j++) {
+      for (int j = 0; j < limitv; j++) {
         Vertex3f* v = (verts[face->vertices[j]]);
         glColor3fv(normalsColor);
         glBegin(GL_LINES);
@@ -404,9 +415,6 @@ void Keyboard(unsigned char key, int x, int y) {
   glutPostRedisplay();
 }
 
-void Idle() {
-}
-
 int main(int argc, char *argv[]) {
   // Initialize GLUT
   glutInit(&argc, argv);
@@ -418,7 +426,6 @@ int main(int argc, char *argv[]) {
   glutMotionFunc(MouseMotion);
   glutKeyboardFunc(Keyboard);
   glutDisplayFunc(Display);
-  glutIdleFunc(Idle);
 
   if (argc < 2) {
     cout << endl;
@@ -430,45 +437,46 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  string filename;
   if (string(argv[1]) == "-s") {
     cout << "Create scene" << endl;
+    filename = "scene/TheShopGirls.obj";
   } else {
-    string filename(argv[1]);
-    cout << filename << endl;
+    filename = string(argv[1]);
+  }
 
-    // Parse arguments
-    for (int i = 2; i < argc; i++) {
-      if (string(argv[i]) == "-l") {
-        light = GL_LIGHT1;
-        cout << "Fixed light." << endl;
-      } else if (string(argv[i]) == "-n") {
-        draw_normals = true;
-        cout << "Drawing normals" << endl;
-      } else if (string(argv[i]) == "-a") {
-        draw_axis = true;
-        cout << "Drawing axises" << endl;
-      } else if (string(argv[i]) == "-b") {
-        draw_box = true;
-        cout << "Drawing bounding box" << endl;
-      } else if (string(argv[i]) == "-debug") {
-        debug = true;
-        cout << "Showing debug statements" << endl;
-      } else if (string(argv[i]) == "-f") {
-        model = GL_FLAT;
-        cout << "Using flat shading" << endl;
-      }
-    }
+  // Parse the obj file, compute the normals, read the textures
+  ParseObj(filename, mesh);
+  mesh.compute_normals();
 
-    // Parse the obj file, compute the normals, read the textures
-    ParseObj(filename, mesh);
-    mesh.compute_normals();
+  texture_ids = new GLuint[mesh.num_materials()];
+  glGenTextures(mesh.num_materials(), texture_ids);
 
-    texture_ids = new GLuint[mesh.num_materials()];
-    glGenTextures(mesh.num_materials(), texture_ids);
+  for (int i = 0; i < mesh.num_materials(); ++i) {
+    Material& material = mesh.material(i);
+    material.LoadTexture(texture_ids[i]);
+  }
 
-    for (int i = 0; i < mesh.num_materials(); ++i) {
-      Material& material = mesh.material(i);
-      material.LoadTexture(texture_ids[i]);
+  // Parse arguments
+  for (int i = 2; i < argc; i++) {
+    if (string(argv[i]) == "-l") {
+      light = GL_LIGHT1;
+      cout << "Fixed light." << endl;
+    } else if (string(argv[i]) == "-n") {
+      draw_normals = true;
+      cout << "Drawing normals" << endl;
+    } else if (string(argv[i]) == "-a") {
+      draw_axis = true;
+      cout << "Drawing axises" << endl;
+    } else if (string(argv[i]) == "-b") {
+      draw_box = true;
+      cout << "Drawing bounding box" << endl;
+    } else if (string(argv[i]) == "-debug") {
+      debug = true;
+      cout << "Showing debug statements" << endl;
+    } else if (string(argv[i]) == "-f") {
+      model = GL_FLAT;
+      cout << "Using flat shading" << endl;
     }
   }
 

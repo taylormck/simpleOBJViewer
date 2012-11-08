@@ -15,26 +15,20 @@ Feel free to use the arrow keys to pan around.
 Up is forward, down is backwards, left is left, and right is right.
 
 
-//---------------------------ANTI-ALIASING !!--------------------------------//
-Anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
-exactly which algorithm is being used.
-
-
 //---------------------------RENDERING OPTIONS !!----------------------------//
 Added a few displaying options
-c - switches the toon outline
+c - toggles the toon outline (off by default)
 l - uses a light source fixed to the world (default is fixed to camera)
 b - shows a bounding box
 a - shows the axis
 n - shows the normals
 f - uses flat shading (default is smooth)
 r - resets to original view (runtime only)
-debug - prints debug statements, for development purposes
 
 Note that the arguments must be separate and must have the '-' flag in front
 
 The program can run with these as arguments or they can be typed at run time
-to alternate the option on or off).
+to toggle the option on or off).
 i.e., 
 viewer [.obj file] -b -a
 will run the viewer showing both a bounding box and the axis.
@@ -52,5 +46,7 @@ a nice big cup of crazy.
 
 
 //-------------------------CUSTOM SCENE !!-----------------------------------//
-Work in progress
+Currently renders a Grass field and some mountains.
+Made using scene.obj, scene.mtl file, and two textures.
 
+Screenshot was taken after setting the camera for the best shot.

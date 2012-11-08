@@ -131,8 +131,9 @@ void InitScene() {
 
   glMatrixMode(GL_MODELVIEW);
   setLights();
-  eye = Vec3f::makeVec(20, 20, 50);
+  eye = Vec3f::makeVec(20, 50, 50);
   pan_scale *= 20.0f;
+  light1_pos = Vec3f::makeVec(1000, 1000, 1000);  // It's the sun
 }
 
 void Display() {
@@ -184,6 +185,8 @@ void DisplayScene() {
   glEnable(GL_LIGHTING);
   glShadeModel(GL_SMOOTH);
   glEnable(GL_LIGHT0);
+
+  glLightfv(GL_LIGHT1, GL_POSITION, light1_pos.x);
 
   RenderMesh(&mesh);
   Outline(&mesh);

@@ -4,14 +4,18 @@ CS ID: tsm544
 
 Comments:
 
-TOON OUTLINE !!
+//---------------------------TOON OUTLINE !!---------------------------------//
 While not actually cel (toon) shaded, this viewer has the option of rendering
 an outline around the mesh that gives it a similar appearance to cel shading.
 Shading is still unaffected, but for now, it looks pretty cool.
 
-Also, anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
+
+//---------------------------ANTI-ALIASING !!--------------------------------//
+Anti-aliasing is enabled.  It wasn't difficult, though I'm unsure
 exactly which algorithm is being used.
 
+
+//---------------------------RENDERING OPTIONS !!----------------------------//
 Added a few displaying options
 c - enables the toon outline
 l - uses a light source fixed to the world (default is fixed to camera)
@@ -31,3 +35,16 @@ will run the viewer showing both a bounding box and the axis.
 
 Pressing 'b' at during runtime will hide the bounding box.
 Pressing 'b' again will show it again.
+
+
+//-------------------------CUSTOM OBJECT !!----------------------------------//
+The original.obj and original.mtl were both made from scratch, and
+red.jpg was founding using Google's image search.
+I simply made a cube and textured it.
+Making anything particularly more complex would require modeling software or
+a nice big cup of crazy.
+
+
+//-------------------------CUSTOM SCENE !!-----------------------------------//
+Work in progress
+

@@ -64,12 +64,13 @@ GLuint* texture_ids;
 #define SKY_BLUE 0.196078f, 0.6f, 0.8f, 1
 #define SCARLET 0.55f, 0.09f, 0.09f, 1
 #define BLACK 0, 0, 0, 1
+#define WHITE 1, 1, 1, 1
 GLfloat normals_color[] = {SCARLET};
 GLfloat outline_color[] = {BLACK};
 //---------------------------------------------------------------------------//
 //  Cell shading ?
 //  Well, at least I'll get a basic outline
-GLfloat outline_width;
+GLfloat outline_width = 100.0f;
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
@@ -78,7 +79,7 @@ void Init() {
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClearColor(SKY_BLUE);
+  glClearColor(WHITE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_POLYGON_SMOOTH);  //  Enable anti-aliasing
 
@@ -108,6 +109,31 @@ void Init() {
   glTranslatef(translate.x[0], translate.x[1], translate.x[2]);
 
   glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
+}
+
+void InitScene() {
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+  glDepthFunc(GL_LEQUAL);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glClearColor(SKY_BLUE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_POLYGON_SMOOTH);  //  Enable anti-aliasing
+
+  // resize the window
+  window_aspect = window_width/static_cast<float>(window_height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(40.0, window_aspect, 1, 1500);
+
+  glMatrixMode(GL_MODELVIEW);
+  setLights();
+  eye = Vec3f::makeVec(20, 50, 50);
+  pan_scale *= 20.0f;
+  light1_pos = Vec3f::makeVec(1000, 1000, 1000);  // It's the sun
 }
 
 void Display() {
@@ -141,6 +167,30 @@ void Display() {
     Outline(&mesh);
 
   glDisable(light);
+  glFlush();
+  glutSwapBuffers();
+}
+
+//----------------------------------------------------------
+//  Renders the scene.  Options are not enabled when
+//  rendering the scene
+void DisplayScene() {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glEnable(GL_RESCALE_NORMAL);
+
+  SetEye();  //  Sets the camera
+  glMultMatrixf(cur_trans);
+
+  glEnable(GL_LIGHTING);
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_LIGHT0);
+
+  glLightfv(GL_LIGHT1, GL_POSITION, light1_pos.x);
+
+  RenderMesh(&mesh);
+  Outline(&mesh);
+
   glFlush();
   glutSwapBuffers();
 }
@@ -541,7 +591,6 @@ int main(int argc, char *argv[]) {
   glutMotionFunc(MouseMotion);
   glutKeyboardFunc(Keyboard);
   glutSpecialFunc(KeyboardSpecial);
-  glutDisplayFunc(Display);
   glutReshapeFunc(Reshape);
 
   if (argc < 2) {
@@ -554,12 +603,42 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  bool scene = false;
   string filename;
   if (string(argv[1]) == "-s") {
     cout << "Create scene" << endl;
-    filename = "";
+    filename = "scene/scene.obj";
+    scene = true;
+    glutDisplayFunc(DisplayScene);
   } else {
     filename = string(argv[1]);
+    glutDisplayFunc(Display);
+
+    // Parse arguments
+    for (int i = 2; i < argc; i++) {
+      if (string(argv[i]) == "-l") {
+        light = GL_LIGHT1;
+        cout << "Fixed light." << endl;
+      } else if (string(argv[i]) == "-n") {
+        draw_normals = true;
+        cout << "Drawing normals" << endl;
+      } else if (string(argv[i]) == "-a") {
+        draw_axis = true;
+        cout << "Drawing axises" << endl;
+      } else if (string(argv[i]) == "-b") {
+        draw_box = true;
+        cout << "Drawing bounding box" << endl;
+      } else if (string(argv[i]) == "-debug") {
+        debug = true;
+        cout << "Showing debug statements" << endl;
+      } else if (string(argv[i]) == "-f") {
+        model = GL_FLAT;
+        cout << "Using flat shading" << endl;
+      } else if (string(argv[i]) == "-c") {
+        cel_shade = true;
+        cout << "Using cel shading" << endl;
+      }
+    }
   }
 
   // Parse the obj file, compute the normals, read the textures
@@ -574,33 +653,10 @@ int main(int argc, char *argv[]) {
     material.LoadTexture(texture_ids[i]);
   }
 
-  // Parse arguments
-  for (int i = 2; i < argc; i++) {
-    if (string(argv[i]) == "-l") {
-      light = GL_LIGHT1;
-      cout << "Fixed light." << endl;
-    } else if (string(argv[i]) == "-n") {
-      draw_normals = true;
-      cout << "Drawing normals" << endl;
-    } else if (string(argv[i]) == "-a") {
-      draw_axis = true;
-      cout << "Drawing axises" << endl;
-    } else if (string(argv[i]) == "-b") {
-      draw_box = true;
-      cout << "Drawing bounding box" << endl;
-    } else if (string(argv[i]) == "-debug") {
-      debug = true;
-      cout << "Showing debug statements" << endl;
-    } else if (string(argv[i]) == "-f") {
-      model = GL_FLAT;
-      cout << "Using flat shading" << endl;
-    } else if (string(argv[i]) == "-c") {
-      cel_shade = true;
-      cout << "Using cel shading" << endl;
-    }
-  }
-
-  Init();
+  if (scene)
+    InitScene();
+  else
+    Init();
   glutMainLoop();
 
   return 0;

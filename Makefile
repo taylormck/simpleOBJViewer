@@ -2,7 +2,7 @@
 # Project 1 Makefile
 
 CC = g++
-CFLAGS = 
+CFLAGS = -DGL_GLEXT_PROTOTYPES
 #CFLAGS = -Wall -ggdb -g
 #CFLAGS = -g
 INCLUDE =

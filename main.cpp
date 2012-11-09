@@ -9,6 +9,7 @@
 #include "./mesh.h"
 #include "./io.h"
 #include "./texture.h"
+#include "./shader.h"
 #define PI 3.14159
 
 using namespace std;

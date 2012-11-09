@@ -663,7 +663,7 @@ int main(int argc, char *argv[]) {
         cout << "Using outline" << endl;
       } else if (string(argv[i]) == "-p") {
         phong_shade = true;
-        cout << "Using phong shading model";
+        cout << "Using phong shading model" << endl;
       }
     }
   }

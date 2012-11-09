@@ -51,6 +51,6 @@ material.o: material.cpp material.h
 clean:
 	rm -f viewer *.o log
 
-TURNIN_FILES = Makefile README.txt *.h *.cpp original.* red.jpg
+TURNIN_FILES = Makefile README.txt *.h *.cpp original.* red.jpg phong.vert phong.frag
 turnin:
 	turnin --submit edwardsj project4 $(TURNIN_FILES)

@@ -37,6 +37,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.209541742" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.577456530" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="glut"/>
+									<listOptionValue builtIn="false" value="GLEW"/>
 									<listOptionValue builtIn="false" value="GLU"/>
 									<listOptionValue builtIn="false" value="GL"/>
 									<listOptionValue builtIn="false" value="m"/>
@@ -106,6 +107,10 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="proj04.cdt.managedbuild.target.gnu.exe.2098574058" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/proj04"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.70634642;cdt.managedbuild.config.gnu.exe.release.70634642.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.424797909;cdt.managedbuild.tool.gnu.cpp.compiler.input.1280016517">
@@ -123,10 +128,10 @@
 		<scannerConfigBuildInfo instanceId="0.258658030">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1549636840;cdt.managedbuild.config.gnu.exe.debug.1549636840.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.384594336;cdt.managedbuild.tool.gnu.c.compiler.input.961968898">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1959525271;cdt.managedbuild.config.gnu.exe.debug.1959525271.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.441753239;cdt.managedbuild.tool.gnu.c.compiler.input.1740528612">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1959525271;cdt.managedbuild.config.gnu.exe.debug.1959525271.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.441753239;cdt.managedbuild.tool.gnu.c.compiler.input.1740528612">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1549636840;cdt.managedbuild.config.gnu.exe.debug.1549636840.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.384594336;cdt.managedbuild.tool.gnu.c.compiler.input.961968898">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1549636840;cdt.managedbuild.config.gnu.exe.debug.1549636840.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1000259919;cdt.managedbuild.tool.gnu.cpp.compiler.input.220694453">
@@ -136,8 +141,4 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/proj04"/>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

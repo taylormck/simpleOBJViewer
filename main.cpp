@@ -5,11 +5,11 @@
 #include <algorithm>
 
 #include "./common.h"
+#include "./shader.h"
 #include "./bb.h"
 #include "./mesh.h"
 #include "./io.h"
 #include "./texture.h"
-#include "./shader.h"
 #define PI 3.14159
 
 using namespace std;
@@ -23,6 +23,7 @@ void DrawBounds();
 void SetEye();
 void setLights();
 void Outline(Mesh* me);
+void DrawAxis();
 
 //---------------------------------------------------------------------------//
 // window parameters
@@ -36,8 +37,9 @@ bool draw_box = false;
 bool debug = false;
 int model = GL_SMOOTH;
 int light = GL_LIGHT0;
-bool cel_shade = false;
+bool outline = false;
 GLfloat pan_scale = 0.02f;
+bool phong_shade = false;
 //---------------------------------------------------------------------------//
 // Variables used for ArcBall Rotation and zoom
 GLfloat m[16];
@@ -69,9 +71,11 @@ GLuint* texture_ids;
 GLfloat normals_color[] = {SCARLET};
 GLfloat outline_color[] = {BLACK};
 //---------------------------------------------------------------------------//
-//  Cell shading ?
-//  Well, at least I'll get a basic outline
+//  Outline
 GLfloat outline_width = 100.0f;
+//---------------------------------------------------------------------------//
+//  Shaders
+Shader phong;
 
 void Init() {
   glEnable(GL_DEPTH_TEST);
@@ -110,6 +114,9 @@ void Init() {
   glTranslatef(translate.x[0], translate.x[1], translate.x[2]);
 
   glGetFloatv(GL_MODELVIEW_MATRIX, cur_trans);
+
+  // Init shaders
+  phong.init("phong.vert", "phong.frag");
 }
 
 void InitScene() {
@@ -137,7 +144,7 @@ void InitScene() {
   light1_pos = Vec3f::makeVec(1000, 1000, 1000);  // It's the sun
 }
 
-void Display() {
+void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glMatrixMode(GL_MODELVIEW);
   glEnable(GL_RESCALE_NORMAL);
@@ -162,9 +169,14 @@ void Display() {
   if (draw_box)
     DrawBounds();
 
+  if (phong_shade)
+    phong.bind();
   RenderMesh(&mesh);
 
-  if (cel_shade)
+  if (phong_shade)
+    phong.unbind();
+
+  if (outline)
     Outline(&mesh);
 
   glDisable(light);
@@ -519,12 +531,21 @@ void Keyboard(unsigned char key, int x, int y) {
       }
       break;
     case 'c':
-      if (cel_shade) {
-        cel_shade = false;
+      if (outline) {
+        outline = false;
         cout << "Not cel shading" << endl;
       } else {
-        cel_shade = true;
+        outline = true;
         cout << "Cel shading" << endl;
+      }
+      break;
+    case 'p':
+      if (phong_shade) {
+        phong_shade = false;
+        cout << "Regular shading." << endl;
+      } else {
+        phong_shade = true;
+        cout << "Phong shading." << endl;
       }
       break;
     case 'r':
@@ -594,6 +615,8 @@ int main(int argc, char *argv[]) {
   glutSpecialFunc(KeyboardSpecial);
   glutReshapeFunc(Reshape);
 
+  InitGlew();
+
   if (argc < 2) {
     cout << endl;
     cout << "Usage: ./viewer (filename.obj | -s) [-l]" << endl;
@@ -613,7 +636,7 @@ int main(int argc, char *argv[]) {
     glutDisplayFunc(DisplayScene);
   } else {
     filename = string(argv[1]);
-    glutDisplayFunc(Display);
+    glutDisplayFunc(Render);
 
     // Parse arguments
     for (int i = 2; i < argc; i++) {
@@ -636,8 +659,11 @@ int main(int argc, char *argv[]) {
         model = GL_FLAT;
         cout << "Using flat shading" << endl;
       } else if (string(argv[i]) == "-c") {
-        cel_shade = true;
-        cout << "Using cel shading" << endl;
+        outline = true;
+        cout << "Using outline" << endl;
+      } else if (string(argv[i]) == "-p") {
+        phong_shade = true;
+        cout << "Using phong shading model";
       }
     }
   }
